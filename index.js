@@ -17,8 +17,6 @@ import TlsSocket from "./lib/tls_socket.js";
 import { createInternalSocketPair } from "./lib/internal_socket.js";
 import Stubs from "./lib/stubs.js";
 
-const slice = Function.call.bind(Array.prototype.slice);
-
 export default function Mitm() {
   if (!(this instanceof Mitm))
     return Mitm.apply(Object.create(Mitm.prototype), arguments).enable();
@@ -107,10 +105,8 @@ Mitm.prototype.connect = function connect(orig, Socket, opts, done) {
   return client;
 };
 
-Mitm.prototype.tcpConnect = function (orig, opts, done) {
-  const args = normalizeConnectArgs(slice(arguments, 1));
-  opts = args[0];
-  done = args[1];
+Mitm.prototype.tcpConnect = function (orig, ...args) {
+  const [opts, done] = normalizeConnectArgs(args);
 
   // The callback is originally bound to the connect event in
   // Socket.prototype.connect.
@@ -123,10 +119,8 @@ Mitm.prototype.tcpConnect = function (orig, opts, done) {
   return client;
 };
 
-Mitm.prototype.tlsConnect = function (orig, opts, done) {
-  const args = normalizeConnectArgs(slice(arguments, 1));
-  opts = args[0];
-  done = args[1];
+Mitm.prototype.tlsConnect = function (orig, ...args) {
+  const [opts, done] = normalizeConnectArgs(args);
 
   const client = this.connect(orig, TlsSocket, opts, done);
   if (client.mitmServerSocket == null) return client;
