@@ -36,7 +36,7 @@
     "coverage": "nyc report --reporter html && open coverage/index.html",
     "lint": "prettier --check \"{lib,test}/**/*.{js,json,ts}\" \"*.{js,json,md}\"",
     "lint:fix": "prettier --write \"{lib,test}/**/*.{js,json,ts}\" \"*.{js,json,md}\"",
-    "test": "nyc mocha"
+    "test": "nyc uvu"
   },
   "devDependencies": {
     "must": ">= 0.13 < 0.14",
