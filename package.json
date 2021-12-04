@@ -33,9 +33,10 @@
   ],
   "main": "index.js",
   "scripts": {
-    "test": "nyc mocha",
+    "coverage": "nyc report --reporter html && open coverage/index.html",
     "lint": "prettier --check \"{lib,test}/**/*.{js,json,ts}\" \"*.{js,json,md}\"",
-    "lint:fix": "prettier --write \"{lib,test}/**/*.{js,json,ts}\" \"*.{js,json,md}\""
+    "lint:fix": "prettier --write \"{lib,test}/**/*.{js,json,ts}\" \"*.{js,json,md}\"",
+    "test": "nyc mocha"
   },
   "dependencies": {
     "semver": ">= 5 < 6",
@@ -49,6 +50,6 @@
     "sinon": ">= 1.9 < 2"
   },
   "engines": {
-    "node": ">= 0.10.24"
+    "node": ">= 14"
   }
 }
