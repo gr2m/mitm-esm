@@ -38,9 +38,6 @@
     "lint:fix": "prettier --write \"{lib,test}/**/*.{js,json,ts}\" \"*.{js,json,md}\"",
     "test": "nyc mocha"
   },
-  "dependencies": {
-    "underscore": ">= 1.1.6 < 1.14"
-  },
   "devDependencies": {
     "mocha": ">= 1.12.0 < 3",
     "must": ">= 0.13 < 0.14",
