@@ -1,4 +1,3 @@
-var _ = require("underscore");
 var Sinon = require("sinon");
 var Net = require("net");
 var Tls = require("tls");
@@ -614,10 +613,16 @@ describe("Mitm", function () {
       });
 
       it("must emit request on Mitm after multiple requests", function (done) {
+        let counter = 0;
         request({ host: "foo" }).end();
         request({ host: "foo" }).end();
         request({ host: "foo" }).end();
-        this.mitm.on("request", _.after(3, done.bind(null, null)));
+        this.mitm.on("request", () => {
+          counter++;
+          if (counter === 3) {
+            done();
+          }
+        });
       });
 
       it("must emit socket on request in next ticks", function (done) {
@@ -701,7 +706,7 @@ describe("Mitm", function () {
     });
 
     mustRequest(function (opts) {
-      return Http.request(_.extend({ agent: new Http.Agent() }, opts));
+      return Http.request({ agent: new Http.Agent(), ...opts });
     });
 
     it("must support keep-alive", function (done) {
@@ -735,7 +740,7 @@ describe("Mitm", function () {
     });
 
     mustRequest(function (opts) {
-      return Https.request(_.extend({ agent: new Https.Agent() }, opts));
+      return Https.request({ agent: new Https.Agent(), ...opts });
     });
   });
 

@@ -1,4 +1,3 @@
-var _ = require("underscore");
 var Net = require("net");
 var Tls = require("tls");
 var Http = require("http");
@@ -50,11 +49,12 @@ Mitm.prototype.enable = function () {
   // ClientRequest.prototype.onSocket is called synchronously from
   // ClientRequest's constructor and is a convenient place to hook into new
   // ClientRequests.
-  this.stubs.stub(
-    ClientRequest.prototype,
-    "onSocket",
-    _.compose(ClientRequest.prototype.onSocket, this.request.bind(this))
-  );
+  const origOnSocket = ClientRequest.prototype.onSocket;
+  const self = this;
+  this.stubs.stub(ClientRequest.prototype, "onSocket", function (socket) {
+    origOnSocket.call(this, socket);
+    self.request(socket);
+  });
 
   return this;
 };
@@ -69,18 +69,15 @@ Mitm.prototype.connect = function connect(orig, Socket, opts, done) {
   // Don't set client.connecting to false because there's nothing setting it
   // back to false later. Originally that was done in Socket.prototype.connect
   // and its afterConnect handler, but we're not calling that.
-  var client = new Socket(
-    _.defaults(
-      {
-        handle: sockets[0],
+  var client = new Socket({
+    handle: sockets[0],
 
-        // Node v10 expects readable and writable to be set at Socket creation time.
-        readable: true,
-        writable: true,
-      },
-      opts
-    )
-  );
+    // Node v10 expects readable and writable to be set at Socket creation time.
+    readable: true,
+    writable: true,
+
+    ...opts,
+  });
 
   this.emit("connect", client, opts);
   if (client.bypassed) return orig.call(this, opts, done);
