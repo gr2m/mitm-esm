@@ -48,7 +48,7 @@ issue][issues] on GitHub.
     socket.write("Hello back!");
   });
 
-  var socket = Net.connect(22, "example.org");
+  const socket = Net.connect(22, "example.org");
   socket.write("Hello!");
   socket.setEncoding("utf8");
   socket.on("data", console.log); // => "Hello back!"
@@ -125,8 +125,8 @@ Require Mitm.js and invoke it as a function to both create an instance of `Mitm`
 and enable intercepting:
 
 ```javascript
-var Mitm = require("mitm");
-var mitm = Mitm();
+const Mitm = require("mitm");
+const mitm = Mitm();
 ```
 
 Mitm.js will then intercept all requests until you disable it:
@@ -161,7 +161,7 @@ mitm.on("connection", function (socket) {
   socket.write("Hello back!");
 });
 
-var socket = Net.connect(22, "example.org");
+const socket = Net.connect(22, "example.org");
 socket.write("Hello!");
 socket.setEncoding("utf8");
 socket.on("data", console.log); // => "Hello back!"

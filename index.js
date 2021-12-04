@@ -1,15 +1,15 @@
-var Net = require("net");
-var Tls = require("tls");
-var Http = require("http");
-var ClientRequest = Http.ClientRequest;
-var Socket = require("./lib/socket");
-var TlsSocket = require("./lib/tls_socket");
-var EventEmitter = require("events").EventEmitter;
-var InternalSocket = require("./lib/internal_socket");
-var Stubs = require("./lib/stubs");
-var slice = Function.call.bind(Array.prototype.slice);
-var normalizeConnectArgs = Net._normalizeArgs;
-var createRequestAndResponse = Http._connectionListener;
+const Net = require("net");
+const Tls = require("tls");
+const Http = require("http");
+const ClientRequest = Http.ClientRequest;
+const Socket = require("./lib/socket");
+const TlsSocket = require("./lib/tls_socket");
+const EventEmitter = require("events").EventEmitter;
+const InternalSocket = require("./lib/internal_socket");
+const Stubs = require("./lib/stubs");
+const slice = Function.call.bind(Array.prototype.slice);
+const normalizeConnectArgs = Net._normalizeArgs;
+const createRequestAndResponse = Http._connectionListener;
 module.exports = Mitm;
 
 function Mitm() {
@@ -29,17 +29,17 @@ Mitm.prototype.addListener = EventEmitter.prototype.addListener;
 Mitm.prototype.removeListener = EventEmitter.prototype.removeListener;
 Mitm.prototype.emit = EventEmitter.prototype.emit;
 
-var IncomingMessage = require("_http_incoming").IncomingMessage;
-var ServerResponse = require("_http_server").ServerResponse;
-var incomingMessageKey = require("_http_common").kIncomingMessage;
-var serverResponseKey = require("_http_server").kServerResponse;
+const IncomingMessage = require("_http_incoming").IncomingMessage;
+const ServerResponse = require("_http_server").ServerResponse;
+const incomingMessageKey = require("_http_common").kIncomingMessage;
+const serverResponseKey = require("_http_server").kServerResponse;
 Mitm.prototype[serverResponseKey] = ServerResponse;
 Mitm.prototype[incomingMessageKey] = IncomingMessage;
 
 Mitm.prototype.enable = function () {
   // Connect is called synchronously.
-  var netConnect = this.tcpConnect.bind(this, Net.connect);
-  var tlsConnect = this.tlsConnect.bind(this, Tls.connect);
+  const netConnect = this.tcpConnect.bind(this, Net.connect);
+  const tlsConnect = this.tlsConnect.bind(this, Tls.connect);
 
   this.stubs.stub(Net, "connect", netConnect);
   this.stubs.stub(Net, "createConnection", netConnect);
@@ -64,12 +64,12 @@ Mitm.prototype.disable = function () {
 };
 
 Mitm.prototype.connect = function connect(orig, Socket, opts, done) {
-  var sockets = InternalSocket.pair();
+  const sockets = InternalSocket.pair();
 
   // Don't set client.connecting to false because there's nothing setting it
   // back to false later. Originally that was done in Socket.prototype.connect
   // and its afterConnect handler, but we're not calling that.
-  var client = new Socket({
+  const client = new Socket({
     handle: sockets[0],
 
     // Node v10 expects readable and writable to be set at Socket creation time.
@@ -87,7 +87,7 @@ Mitm.prototype.connect = function connect(orig, Socket, opts, done) {
   // classes. If unset, it's set to the used HTTP server (Mitm instance in our
   // case) in _http_server.js.
   // See also: https://github.com/nodejs/node/issues/13435.
-  var server = (client.mitmServerSocket = new Socket({
+  const server = (client.mitmServerSocket = new Socket({
     handle: sockets[1],
     readable: true,
     writable: true,
@@ -105,13 +105,13 @@ Mitm.prototype.connect = function connect(orig, Socket, opts, done) {
 };
 
 Mitm.prototype.tcpConnect = function (orig, opts, done) {
-  var args = normalizeConnectArgs(slice(arguments, 1));
+  const args = normalizeConnectArgs(slice(arguments, 1));
   opts = args[0];
   done = args[1];
 
   // The callback is originally bound to the connect event in
   // Socket.prototype.connect.
-  var client = this.connect(orig, Socket, opts, done);
+  const client = this.connect(orig, Socket, opts, done);
   if (client.mitmServerSocket == null) {
     return client;
   }
@@ -121,11 +121,11 @@ Mitm.prototype.tcpConnect = function (orig, opts, done) {
 };
 
 Mitm.prototype.tlsConnect = function (orig, opts, done) {
-  var args = normalizeConnectArgs(slice(arguments, 1));
+  const args = normalizeConnectArgs(slice(arguments, 1));
   opts = args[0];
   done = args[1];
 
-  var client = this.connect(orig, TlsSocket, opts, done);
+  const client = this.connect(orig, TlsSocket, opts, done);
   if (client.mitmServerSocket == null) return client;
   if (done) client.once("secureConnect", done);
 

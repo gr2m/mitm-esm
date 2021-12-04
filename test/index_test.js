@@ -1,19 +1,19 @@
-var Net = require("net");
-var Tls = require("tls");
-var Http = require("http");
-var Https = require("https");
-var Transform = require("stream").Transform;
-var EventEmitter = require("events").EventEmitter;
+const Net = require("net");
+const Tls = require("tls");
+const Http = require("http");
+const Https = require("https");
+const Transform = require("stream").Transform;
+const EventEmitter = require("events").EventEmitter;
 
-var Sinon = require("sinon");
-var { suite } = require("uvu");
+const Sinon = require("sinon");
+const { suite } = require("uvu");
 require("must/register");
 
-var IncomingMessage = Http.IncomingMessage;
-var ServerResponse = Http.ServerResponse;
-var ClientRequest = Http.ClientRequest;
+const IncomingMessage = Http.IncomingMessage;
+const ServerResponse = Http.ServerResponse;
+const ClientRequest = Http.ClientRequest;
 
-var Mitm = require("..");
+const Mitm = require("..");
 
 const test = suite("Mitm");
 let mitm;
@@ -35,7 +35,7 @@ test("must return an instance of Mitm when called as a function", () => {
 
 function mustConnect(moduleName, module) {
   test(`${moduleName}: must return an instance of Net.Socket`, () => {
-    var socket = module.connect({ host: "foo", port: 80 });
+    const socket = module.connect({ host: "foo", port: 80 });
     socket.must.be.an.instanceof(Net.Socket);
   });
 
@@ -48,10 +48,10 @@ function mustConnect(moduleName, module) {
   });
 
   test(`${moduleName}: must emit connect on Mitm`, () => {
-    var onConnect = Sinon.spy();
+    const onConnect = Sinon.spy();
     mitm.on("connect", onConnect);
-    var opts = { host: "foo" };
-    var socket = module.connect(opts);
+    const opts = { host: "foo" };
+    const socket = module.connect(opts);
 
     onConnect.callCount.must.equal(1);
     onConnect.firstCall.args[0].must.equal(socket);
@@ -59,9 +59,9 @@ function mustConnect(moduleName, module) {
   });
 
   test(`${moduleName}: must emit connect on Mitm with options object given host and port`, () => {
-    var onConnect = Sinon.spy();
+    const onConnect = Sinon.spy();
     mitm.on("connect", onConnect);
-    var socket = module.connect(9, "127.0.0.1");
+    const socket = module.connect(9, "127.0.0.1");
 
     onConnect.callCount.must.equal(1);
     onConnect.firstCall.args[0].must.equal(socket);
@@ -69,10 +69,10 @@ function mustConnect(moduleName, module) {
   });
 
   test(`${moduleName}: must emit connection on Mitm`, () => {
-    var onConnection = Sinon.spy();
+    const onConnection = Sinon.spy();
     mitm.on("connection", onConnection);
-    var opts = { host: "foo" };
-    var socket = module.connect(opts);
+    const opts = { host: "foo" };
+    const socket = module.connect(opts);
 
     onConnection.callCount.must.equal(1);
     onConnection.firstCall.args[0].must.be.an.instanceof(Net.Socket);
@@ -82,7 +82,7 @@ function mustConnect(moduleName, module) {
 
   test(`${moduleName}: must emit connect on socket in next ticks`, () => {
     return new Promise((resolve) => {
-      var socket = module.connect({ host: "foo" });
+      const socket = module.connect({ host: "foo" });
       socket.on("connect", resolve);
     });
   });
@@ -116,7 +116,7 @@ function mustConnect(moduleName, module) {
       mitm.on("connection", function (socket) {
         socket.end();
       });
-      var socket = module.connect({ host: "foo" });
+      const socket = module.connect({ host: "foo" });
       socket.on("close", resolve);
     });
   });
@@ -127,18 +127,18 @@ function mustConnect(moduleName, module) {
         process.nextTick(socket.end.bind(socket));
       });
 
-      var socket = module.connect({ host: "foo" });
+      const socket = module.connect({ host: "foo" });
       socket.on("close", resolve);
     });
   });
 
   test(`${moduleName}: must intercept 127.0.0.1`, () => {
     return new Promise((resolve) => {
-      var server;
+      let server;
       mitm.on("connection", function (s) {
         server = s;
       });
-      var client = module.connect({ host: "127.0.0.1" });
+      const client = module.connect({ host: "127.0.0.1" });
       server.write("Hello");
 
       client.setEncoding("utf8");
@@ -168,8 +168,8 @@ function mustConnect(moduleName, module) {
   test(`${moduleName}: when bypassed must call original module.connect`, () => {
     mitm.disable();
 
-    var connect = sinon.spy(module, "connect");
-    var testMitm = Mitm();
+    const connect = sinon.spy(module, "connect");
+    const testMitm = Mitm();
     testMitm.on("connect", function (client) {
       client.bypass();
     });
@@ -191,8 +191,8 @@ function mustConnect(moduleName, module) {
         client.bypass();
       });
 
-      var onConnect = Sinon.spy();
-      var client = module.connect({ host: "127.0.0.1", port: 9 }, onConnect);
+      const onConnect = Sinon.spy();
+      const client = module.connect({ host: "127.0.0.1", port: 9 }, onConnect);
 
       client.on(
         "error",
@@ -208,7 +208,7 @@ function mustConnect(moduleName, module) {
     mitm.on("connect", function (client) {
       client.bypass();
     });
-    var onConnection = Sinon.spy();
+    const onConnection = Sinon.spy();
     mitm.on("connection", onConnection);
     module.connect({ host: "127.0.0.1", port: 9 }).on("error", noop);
     onConnection.callCount.must.equal(0);
@@ -218,7 +218,7 @@ function mustConnect(moduleName, module) {
 mustConnect("Net.connect", Net);
 
 test("Net.connect must not return an instance of Tls.TLSSocket", () => {
-  var client = Net.connect({ host: "foo", port: 80 });
+  const client = Net.connect({ host: "foo", port: 80 });
   client.must.not.be.an.instanceof(Tls.TLSSocket);
 });
 
@@ -232,7 +232,7 @@ test("Net.connect must not set the authorized property", () => {
 
 test("Net.connect must not emit secureConnect on client", () => {
   return new Promise((resolve) => {
-    var client = Net.connect({ host: "foo" });
+    const client = Net.connect({ host: "foo" });
     client.on("secureConnect", resolve);
     resolve();
   });
@@ -240,7 +240,7 @@ test("Net.connect must not emit secureConnect on client", () => {
 
 test("Net.connect must not emit secureConnect on server", () => {
   return new Promise((resolve) => {
-    var server;
+    let server;
     mitm.on("connection", function (s) {
       server = s;
     });
@@ -252,11 +252,11 @@ test("Net.connect must not emit secureConnect on server", () => {
 
 test("Socket.prototype.write must write to client from server", () => {
   return new Promise((resolve) => {
-    var server;
+    let server;
     mitm.on("connection", function (s) {
       server = s;
     });
-    var client = Net.connect({ host: "foo" });
+    const client = Net.connect({ host: "foo" });
     server.write("Hello ☺️");
 
     client.setEncoding("utf8");
@@ -269,13 +269,13 @@ test("Socket.prototype.write must write to client from server", () => {
 
 test("Socket.prototype.write must write to client from server in the next tick", () => {
   return new Promise((resolve) => {
-    var server;
+    let server;
     mitm.on("connection", function (s) {
       server = s;
     });
-    var client = Net.connect({ host: "foo" });
+    const client = Net.connect({ host: "foo" });
 
-    var ticked = false;
+    let ticked = false;
     client.once("data", () => {
       ticked.must.be.true();
       resolve();
@@ -287,11 +287,11 @@ test("Socket.prototype.write must write to client from server in the next tick",
 
 test("Socket.prototype.write must write to server from client", () => {
   return new Promise((resolve) => {
-    var server;
+    let server;
     mitm.on("connection", function (s) {
       server = s;
     });
-    var client = Net.connect({ host: "foo" });
+    const client = Net.connect({ host: "foo" });
     client.write("Hello ☺️");
 
     server.setEncoding("utf8");
@@ -304,13 +304,13 @@ test("Socket.prototype.write must write to server from client", () => {
 
 test("Socket.prototype.write must write to server from client in the next tick", () => {
   return new Promise((resolve) => {
-    var server;
+    let server;
     mitm.on("connection", function (s) {
       server = s;
     });
-    var client = Net.connect({ host: "foo" });
+    const client = Net.connect({ host: "foo" });
 
-    var ticked = false;
+    let ticked = false;
     server.once("data", () => {
       ticked.must.be.true();
       resolve();
@@ -324,11 +324,11 @@ test("Socket.prototype.write must write to server from client in the next tick",
 // The test still passes for Node v0.10 and newer v0.11s, so let it be.
 test("Socket.prototype.write must write to server from client given binary", () => {
   return new Promise((resolve) => {
-    var server;
+    let server;
     mitm.on("connection", function (s) {
       server = s;
     });
-    var client = Net.connect({ host: "foo" });
+    const client = Net.connect({ host: "foo" });
     client.write("Hello", "utf-8");
 
     server.setEncoding("binary");
@@ -341,11 +341,11 @@ test("Socket.prototype.write must write to server from client given binary", () 
 
 test("Socket.prototype.write must write to server from client given latin1", () => {
   return new Promise((resolve) => {
-    var server;
+    let server;
     mitm.on("connection", function (s) {
       server = s;
     });
-    var client = Net.connect({ host: "foo" });
+    const client = Net.connect({ host: "foo" });
     client.write("Hello", "latin1");
 
     server.setEncoding("latin1");
@@ -358,11 +358,11 @@ test("Socket.prototype.write must write to server from client given latin1", () 
 
 test("Socket.prototype.write must write to server from client given a buffer", () => {
   return new Promise((resolve) => {
-    var server;
+    let server;
     mitm.on("connection", function (s) {
       server = s;
     });
-    var client = Net.connect({ host: "foo" });
+    const client = Net.connect({ host: "foo" });
     client.write(Buffer.from("Hello", "utf-8"));
 
     process.nextTick(() => {
@@ -374,11 +374,11 @@ test("Socket.prototype.write must write to server from client given a buffer", (
 
 test("Socket.prototype.write must write to server from client given a UTF-8 string", () => {
   return new Promise((resolve) => {
-    var server;
+    let server;
     mitm.on("connection", function (s) {
       server = s;
     });
-    var client = Net.connect({ host: "foo" });
+    const client = Net.connect({ host: "foo" });
     client.write("Hello", "utf8");
 
     process.nextTick(() => {
@@ -390,11 +390,11 @@ test("Socket.prototype.write must write to server from client given a UTF-8 stri
 
 test("Socket.prototype.write must write to server from client given a ASCII string", () => {
   return new Promise((resolve) => {
-    var server;
+    let server;
     mitm.on("connection", function (s) {
       server = s;
     });
-    var client = Net.connect({ host: "foo" });
+    const client = Net.connect({ host: "foo" });
     client.write("Hello", "ascii");
 
     process.nextTick(() => {
@@ -406,11 +406,11 @@ test("Socket.prototype.write must write to server from client given a ASCII stri
 
 test("Socket.prototype.write must write to server from client given a UCS-2 string", () => {
   return new Promise((resolve) => {
-    var server;
+    let server;
     mitm.on("connection", function (s) {
       server = s;
     });
-    var client = Net.connect({ host: "foo" });
+    const client = Net.connect({ host: "foo" });
     client.write("Hello", "ucs2");
 
     process.nextTick(() => {
@@ -426,11 +426,11 @@ test("Socket.prototype.write must write to server from client given a UCS-2 stri
 
 test("Socket.prototype.end() must emit end when closed on server", () => {
   return new Promise((resolve) => {
-    var server;
+    let server;
     mitm.on("connection", function (s) {
       server = s;
     });
-    var client = Net.connect({ host: "foo" });
+    const client = Net.connect({ host: "foo" });
     server.end();
     client.on("end", resolve);
   });
@@ -441,7 +441,7 @@ test("Socket.prototype.ref must allow calling on client", () => {
 });
 
 test("Socket.prototype.ref must allow calling on server", () => {
-  var server;
+  let server;
   mitm.on("connection", function (s) {
     server = s;
   });
@@ -454,7 +454,7 @@ test("Socket.prototype.unref must allow calling on client", () => {
 });
 
 test("Socket.prototype.unref must allow calling on server", () => {
-  var server;
+  let server;
   mitm.on("connection", function (s) {
     server = s;
   });
@@ -470,7 +470,7 @@ test("Socket.prototype.pipe must allow piping to itself", () => {
       server.pipe(new Upcase()).pipe(server);
     });
 
-    var client = Net.connect({ host: "foo" });
+    const client = Net.connect({ host: "foo" });
     client.write("Hello");
 
     client.setEncoding("utf8");
@@ -485,11 +485,11 @@ test("Socket.prototype.pipe must allow piping to itself", () => {
 // https://github.com/moll/node-mitm/issues/26
 test("Socket.prototype.destroy must emit end when destroyed on server", () => {
   return new Promise((resolve) => {
-    var server;
+    let server;
     mitm.on("connection", function (s) {
       server = s;
     });
-    var client = Net.connect({ host: "foo" });
+    const client = Net.connect({ host: "foo" });
     server.destroy();
     client.on("end", resolve);
   });
@@ -515,14 +515,14 @@ test("Tls.connect must return an instance of Tls.TLSSocket given port and host",
 
 test("Tls.connect must emit secureConnect in next ticks", () => {
   return new Promise((resolve) => {
-    var socket = Tls.connect({ host: "foo" });
+    const socket = Tls.connect({ host: "foo" });
     socket.on("secureConnect", resolve);
   });
 });
 
 test("Tls.connect must emit secureConnect after connect in next ticks", () => {
   return new Promise((resolve) => {
-    var socket = Tls.connect({ host: "foo" });
+    const socket = Tls.connect({ host: "foo" });
 
     socket.on("connect", () => {
       socket.on("secureConnect", resolve);
@@ -532,7 +532,7 @@ test("Tls.connect must emit secureConnect after connect in next ticks", () => {
 
 test("Tls.connect must not emit secureConnect on server", () => {
   return new Promise((resolve) => {
-    var server;
+    let server;
     mitm.on("connection", function (s) {
       server = s;
     });
@@ -544,9 +544,9 @@ test("Tls.connect must not emit secureConnect on server", () => {
 
 test("Tls.connect must call back on secureConnect", () => {
   return new Promise((resolve) => {
-    var connected = false;
+    let connected = false;
 
-    var client = Tls.connect({ host: "foo" }, () => {
+    const client = Tls.connect({ host: "foo" }, () => {
       connected.must.be.true();
       resolve();
     });
@@ -571,14 +571,14 @@ function mustRequest(context, request) {
   });
 
   test(`${context}: must emit connect on Mitm`, () => {
-    var onConnect = Sinon.spy();
+    const onConnect = Sinon.spy();
     mitm.on("connect", onConnect);
     request({ host: "foo" });
     onConnect.callCount.must.equal(1);
   });
 
   test(`${context}: must emit connect on Mitm after multiple connections`, () => {
-    var onConnect = Sinon.spy();
+    const onConnect = Sinon.spy();
     mitm.on("connect", onConnect);
     request({ host: "foo" });
     request({ host: "foo" });
@@ -587,14 +587,14 @@ function mustRequest(context, request) {
   });
 
   test(`${context}: must emit connection on Mitm`, () => {
-    var onConnection = Sinon.spy();
+    const onConnection = Sinon.spy();
     mitm.on("connection", onConnection);
     request({ host: "foo" });
     onConnection.callCount.must.equal(1);
   });
 
   test(`${context}: must emit connection on Mitm after multiple connections`, () => {
-    var onConnection = Sinon.spy();
+    const onConnection = Sinon.spy();
     mitm.on("connection", onConnection);
     request({ host: "foo" });
     request({ host: "foo" });
@@ -604,7 +604,7 @@ function mustRequest(context, request) {
 
   test(`${context}: must emit request on Mitm`, () => {
     return new Promise((resolve) => {
-      var client = request({ host: "foo" });
+      const client = request({ host: "foo" });
       client.end();
 
       mitm.on("request", function (req, res) {
@@ -633,7 +633,7 @@ function mustRequest(context, request) {
 
   test(`${context}: must emit socket on request in next ticks`, () => {
     return new Promise((resolve) => {
-      var client = request({ host: "foo" });
+      const client = request({ host: "foo" });
       client.on("socket", resolve);
     });
   });
@@ -641,7 +641,7 @@ function mustRequest(context, request) {
   // https://github.com/moll/node-mitm/pull/25
   test(`${context}: must emit connect after socket event`, () => {
     return new Promise((resolve) => {
-      var client = request({ host: "foo" });
+      const client = request({ host: "foo" });
 
       client.on("socket", function (socket) {
         socket.on("connect", resolve);
@@ -667,7 +667,7 @@ function mustRequest(context, request) {
       mitm.on("connect", function (client) {
         client.bypass();
       });
-      var onRequest = Sinon.spy();
+      const onRequest = Sinon.spy();
       mitm.on("request", onRequest);
       request({ host: "127.0.0.1" }).on("error", function (_err) {
         onRequest.callCount.must.equal(0);
@@ -683,7 +683,7 @@ mustRequest("Https.request", Https.request);
 // https://github.com/moll/node-mitm/pull/25
 test("Https.request must emit secureConnect after socket event", () => {
   return new Promise((resolve) => {
-    var client = Https.request({ host: "foo" });
+    const client = Https.request({ host: "foo" });
 
     client.on("socket", function (socket) {
       socket.on("secureConnect", resolve);
@@ -697,7 +697,7 @@ mustRequest("Using Http.Agent", function (opts) {
 
 test("Using Http.Agent must support keep-alive", () => {
   return new Promise((resolve) => {
-    var client = Http.request({
+    const client = Http.request({
       host: "foo",
       agent: new Http.Agent({ keepAlive: true }),
     });
@@ -735,7 +735,7 @@ test("IncomingMessage must have URL", () => {
 
 test("IncomingMessage must have headers", () => {
   return new Promise((resolve) => {
-    var req = Http.request({ host: "foo" });
+    const req = Http.request({ host: "foo" });
     req.setHeader("Content-Type", "application/json");
     req.end();
 
@@ -748,7 +748,7 @@ test("IncomingMessage must have headers", () => {
 
 test("IncomingMessage must have body", () => {
   return new Promise((resolve) => {
-    var client = Http.request({ host: "foo", method: "POST" });
+    const client = Http.request({ host: "foo", method: "POST" });
     client.write("Hello");
 
     mitm.on("request", function (req, _res) {
@@ -805,7 +805,7 @@ test("ServerResponse must have a reference to the IncomingMessage", () => {
 
 test("ServerResponse.prototype.write must make clientRequest emit response", () => {
   return new Promise((resolve) => {
-    var req = Http.request({ host: "foo" });
+    const req = Http.request({ host: "foo" });
     req.end();
     mitm.on("request", function (_req, res) {
       res.write("Test");
@@ -827,7 +827,7 @@ test("ServerResponse.prototype.write must call given callback", () => {
 
 test("ServerResponse.prototype.end must make ClientRequest emit response", () => {
   return new Promise((resolve) => {
-    var client = Http.request({ host: "foo" });
+    const client = Http.request({ host: "foo" });
     client.end();
     mitm.on("request", function (_req, res) {
       res.end();
@@ -841,7 +841,7 @@ test("ServerResponse.prototype.end must make ClientRequest emit response", () =>
 // later Node versions.
 test("ServerResponse.prototype.end must make IncomingMessage emit end", () => {
   return new Promise((resolve) => {
-    var client = Http.request({ host: "foo" });
+    const client = Http.request({ host: "foo" });
     client.end();
     mitm.on("request", function (_req, res) {
       res.end();
