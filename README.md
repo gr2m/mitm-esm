@@ -1,13 +1,13 @@
-Mitm.js
-=======
+# Mitm.js
+
 [![NPM version][npm-badge]](https://www.npmjs.com/package/mitm)
 [![Build status][travis-badge]](https://travis-ci.org/moll/node-mitm)
 
 Mitm.js is a library for Node.js (and Io.js) to **intercept and mock** outgoing
-network **TCP** and **HTTP** connections.  Mitm.js intercepts and gives you
+network **TCP** and **HTTP** connections. Mitm.js intercepts and gives you
 a `Net.Socket` to communicate as if you were the remote server. For **HTTP
 requests** it even gives you `Http.IncomingMessage` and `Http.ServerResponse`
-— just like you're used to when writing Node.js servers.  Except there's no
+— just like you're used to when writing Node.js servers. Except there's no
 actual server running, it's all just _In-Process Interception™_.
 
 Intercepting connections and requests is **extremely useful to test and ensure
@@ -27,14 +27,15 @@ issue][issues] on GitHub.
 [travis-badge]: https://travis-ci.org/moll/node-mitm.svg?branch=master
 
 ### Tour
+
 - Intercept both **TCP socket connections** (`Net.connect`) and **HTTP
-  requests** (`Http.request` and `Https.request`).  
+  requests** (`Http.request` and `Https.request`).
 
 - Hooks to Node.js's network functions at a **very low level** with the goal of
   not having to patch existing classes and have everything behave as if bytes
   were arriving from the network.
 
-- Does *not* have any kitchen sink features or yet another API to assert on
+- Does _not_ have any kitchen sink features or yet another API to assert on
   intercepted connections.  
   That's a different responsibility handled better by assertion libraries
   (you'll do no better than to pick [Must.js][must] for that ;-).
@@ -43,12 +44,14 @@ issue][issues] on GitHub.
   gives you access to a vanilla `Net.Socket` to respond with:
 
   ```javascript
-  mitm.on("connection", function(socket) { socket.write("Hello back!") })
+  mitm.on("connection", function (socket) {
+    socket.write("Hello back!");
+  });
 
-  var socket = Net.connect(22, "example.org")
-  socket.write("Hello!")
-  socket.setEncoding("utf8")
-  socket.on("data", console.log) // => "Hello back!"
+  var socket = Net.connect(22, "example.org");
+  socket.write("Hello!");
+  socket.setEncoding("utf8");
+  socket.on("data", console.log); // => "Hello back!"
   ```
 
 - When you do **HTTP or HTTPS** requests, Mitm.js gives you both
@@ -58,27 +61,29 @@ issue][issues] on GitHub.
 
   Mitm.js comes very handy to ensure your code makes requests with the
   appropriate parameters:
-  ```javascript
-  mitm.on("request", function(req, res) {
-    req.headers.authorization.must.equal("OAuth DEADBEEF")
-  })
 
-  Http.get("http://example.org")
+  ```javascript
+  mitm.on("request", function (req, res) {
+    req.headers.authorization.must.equal("OAuth DEADBEEF");
+  });
+
+  Http.get("http://example.org");
   ```
 
   It's also useful to see if your code behaves as you'd expect if everything is
   not `200 OK`:
-  ```javascript
-  mitm.on("request", function(req, res) {
-    res.statusCode = 402
-    res.end("Pay up, sugar!")
-  })
 
-  Http.get("http://example.org", function(res) {
-    res.setEncoding("utf8")
-    res.statusCode // => 402
-    res.on("data", console.log) // => "Pay up, sugar!"
-  })
+  ```javascript
+  mitm.on("request", function (req, res) {
+    res.statusCode = 402;
+    res.end("Pay up, sugar!");
+  });
+
+  Http.get("http://example.org", function (res) {
+    res.setEncoding("utf8");
+    res.statusCode; // => 402
+    res.on("data", console.log); // => "Pay up, sugar!"
+  });
   ```
 
   `Http.IncomingMessage` and `Http.ServerResponse` are the same objects
@@ -87,24 +92,24 @@ issue][issues] on GitHub.
 
 - **Bypass** interception selectively for some connections (such as your SQL
   server) and let them connect as usual.
+
   ```javascript
-  mitm.on("connect", function(socket, opts) {
-    if (opts.host == "sql.example.org" && opts.port == 5432) socket.bypass()
-  })
+  mitm.on("connect", function (socket, opts) {
+    if (opts.host == "sql.example.org" && opts.port == 5432) socket.bypass();
+  });
   ```
 
 - **Developed with automated tests**. Yeah, I know, why should one list this
   a feature when writing tests is just a sign of professionalism and respect
   towards other developers? But in a world where so many libraries and
-  "production" software are released without *any* tests, I like to point out
+  "production" software are released without _any_ tests, I like to point out
   that I even write tests for testing libraries. ;-)
 
 [must]: https://github.com/moll/js-must
 [express]: http://expressjs.com
 
+## Installing
 
-Installing
-----------
 ```
 npm install mitm
 ```
@@ -114,71 +119,84 @@ breaking changes may appear between minor versions (the middle number).
 
 [semver]: http://semver.org/
 
+## Using
 
-Using
------
 Require Mitm.js and invoke it as a function to both create an instance of `Mitm`
 and enable intercepting:
+
 ```javascript
-var Mitm = require("mitm")
-var mitm = Mitm()
+var Mitm = require("mitm");
+var mitm = Mitm();
 ```
 
 Mitm.js will then intercept all requests until you disable it:
+
 ```javascript
-mitm.disable()
+mitm.disable();
 ```
 
 ### Intercepting in tests
+
 In tests, it's best to use the _before_ and _after_ hooks to enable and disable
 intercepting for each test case:
+
 ```javascript
-beforeEach(function() { this.mitm = Mitm() })
-afterEach(function() { this.mitm.disable() })
+beforeEach(function () {
+  this.mitm = Mitm();
+});
+afterEach(function () {
+  this.mitm.disable();
+});
 ```
 
 ### Intercepting TCP connections
+
 After you've called `Mitm()`, Mitm.js will intercept and emit `connection` on
 itself for each new connection.  
 The `connection` event will be given a server side `Net.Socket` for you to reply
 with:
 
 ```javascript
-mitm.on("connection", function(socket) { socket.write("Hello back!") })
+mitm.on("connection", function (socket) {
+  socket.write("Hello back!");
+});
 
-var socket = Net.connect(22, "example.org")
-socket.write("Hello!")
-socket.setEncoding("utf8")
-socket.on("data", console.log) // => "Hello back!"
+var socket = Net.connect(22, "example.org");
+socket.write("Hello!");
+socket.setEncoding("utf8");
+socket.on("data", console.log); // => "Hello back!"
 ```
 
 ### Intercepting HTTP/HTTPS requests
+
 After you've called `Mitm()`, Mitm.js will intercept and emit `request` on itself for each new HTTP or HTTPS request.  
 The `request` event will be given a server side `Http.IncomingMessage` and
 `Http.ServerResponse`.
 
 For example, asserting on HTTP requests would look something like this:
-```javascript
-mitm.on("request", function(req, res) {
-  req.headers.authorization.must.equal("OAuth DEADBEEF")
-})
 
-Http.get("http://example.org")
+```javascript
+mitm.on("request", function (req, res) {
+  req.headers.authorization.must.equal("OAuth DEADBEEF");
+});
+
+Http.get("http://example.org");
 ```
 
 Responding to requests is just as easy and exactly like you're used to from
 using Node.js HTTP servers (or from libraries like [Express.js][express]):
-```javascript
-mitm.on("request", function(req, res) {
-  res.statusCode = 402
-  res.end("Pay up, sugar!")
-})
 
-Http.get("http://example.org", function(res) {
-  res.statusCode // => 402
-  res.setEncoding("utf8")
-  res.on("data", console.log) // => "Pay up, sugar!"
-})
+```javascript
+mitm.on("request", function (req, res) {
+  res.statusCode = 402;
+  res.end("Pay up, sugar!");
+});
+
+Http.get("http://example.org", function (res) {
+  res.statusCode; // => 402
+  res.setEncoding("utf8");
+  res.on("data", console.log); // => "Pay up, sugar!"
+});
 ```
 
 Please note that HTTPS requests are currently "morphed" into HTTP requests.
@@ -187,18 +205,20 @@ verification. But if you do need to test this, please ping me and we'll see if
 we can get Mitm.js to support that.
 
 #### Custom HTTP Methods
+
 Unfortunately because [Node.js's web server doesn't seem to support custom HTTP methods](https://github.com/nodejs/node-v0.x-archive/issues/3192) (that is, ones beyond `require("http").METHODS`), Mitm.js doesn't support them out of the box either. The Node.js HTTP parser throws an error given a request with an unsupported method. However, as Mitm.js also supports intercepting at the TCP level, you could hook in your own HTTP parser. I've briefly alluded to it in [issue #63](https://github.com/moll/node-mitm/issues/63).
 
 ### Bypassing interception
+
 You can bypass connections listening to the `connect` event on the Mitm instance
 and then calling `bypass` on the given socket. To help you do
 so selectively, `connect` is given the `options` object that was given to
 `Net.connect`:
 
 ```javascript
-mitm.on("connect", function(socket, opts) {
-  if (opts.host == "sql.example.org" && opts.port == 5432) socket.bypass()
-})
+mitm.on("connect", function (socket, opts) {
+  if (opts.host == "sql.example.org" && opts.port == 5432) socket.bypass();
+});
 ```
 
 Bypassed connections do **not** emit `connection` or `request` events. They're
@@ -208,33 +228,31 @@ In most cases you don't need to bypass because by the time you call `Mitm` in
 your tests to start intercepting, all of the long-running connections, such as
 database or cache connections, are already made.
 
-You might need to bypass connections you make to *localhost* when you're running
+You might need to bypass connections you make to _localhost_ when you're running
 integration tests against the HTTP server you started in the test process, but
 still want to intercept some other connections that this request might invoke.  
 The following should suffice:
 
 ```javascript
-mitm.on("connect", function(socket, opts) {
-  if (opts.host == "localhost") socket.bypass()
-})
+mitm.on("connect", function (socket, opts) {
+  if (opts.host == "localhost") socket.bypass();
+});
 ```
 
+## Events
 
-Events
-------
 All events that Mitm will emit on an instance of itself (see [Using
 Mitm.js](#using) for examples):
 
-Event      | Description
------------|------------
-connect    | Emitted when a TCP connection is made.<br> Given the **client side** `Net.Socket` and `options` from `Net.connect`.
-connection | Emitted when a TCP connection is made.<br> Given the **server side** `Net.Socket` and `options` from `Net.connect`.
-request    | Emitted when a HTTP/HTTPS request is made.<br> Given the server side `Http.IncomingMessage` and `Http.ServerResponse`.
+| Event      | Description                                                                                                            |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------- |
+| connect    | Emitted when a TCP connection is made.<br> Given the **client side** `Net.Socket` and `options` from `Net.connect`.    |
+| connection | Emitted when a TCP connection is made.<br> Given the **server side** `Net.Socket` and `options` from `Net.connect`.    |
+| request    | Emitted when a HTTP/HTTPS request is made.<br> Given the server side `Http.IncomingMessage` and `Http.ServerResponse`. |
 
+## License
 
-License
--------
-Mitm.js is released under a *Lesser GNU Affero General Public License*, which
+Mitm.js is released under a _Lesser GNU Affero General Public License_, which
 in summary means:
 
 - You **can** use this program for **no cost**.
@@ -245,9 +263,8 @@ in summary means:
 
 For more convoluted language, see the `LICENSE` file.
 
+## About
 
-About
------
 **[Andri Möll][moll]** typed this and the code.  
 [Monday Calendar][monday] supported the engineering work.
 
