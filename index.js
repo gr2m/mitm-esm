@@ -2,18 +2,15 @@ var _ = require("underscore");
 var Net = require("net");
 var Tls = require("tls");
 var Http = require("http");
-var Https = require("https");
 var ClientRequest = Http.ClientRequest;
 var Socket = require("./lib/socket");
 var TlsSocket = require("./lib/tls_socket");
 var EventEmitter = require("events").EventEmitter;
 var InternalSocket = require("./lib/internal_socket");
 var Stubs = require("./lib/stubs");
-var Semver = require("semver");
 var slice = Function.call.bind(Array.prototype.slice);
 var normalizeConnectArgs = Net._normalizeConnectArgs || Net._normalizeArgs;
 var createRequestAndResponse = Http._connectionListener;
-var NODE_0_10 = Semver.satisfies(process.version, ">= 0.10 < 0.11");
 module.exports = Mitm;
 
 function Mitm() {
@@ -33,14 +30,12 @@ Mitm.prototype.addListener = EventEmitter.prototype.addListener;
 Mitm.prototype.removeListener = EventEmitter.prototype.removeListener;
 Mitm.prototype.emit = EventEmitter.prototype.emit;
 
-if (Semver.satisfies(process.version, "^8.12 || >= 9.6")) {
-  var IncomingMessage = require("_http_incoming").IncomingMessage;
-  var ServerResponse = require("_http_server").ServerResponse;
-  var incomingMessageKey = require("_http_common").kIncomingMessage;
-  var serverResponseKey = require("_http_server").kServerResponse;
-  Mitm.prototype[serverResponseKey] = ServerResponse;
-  Mitm.prototype[incomingMessageKey] = IncomingMessage;
-}
+var IncomingMessage = require("_http_incoming").IncomingMessage;
+var ServerResponse = require("_http_server").ServerResponse;
+var incomingMessageKey = require("_http_common").kIncomingMessage;
+var serverResponseKey = require("_http_server").kServerResponse;
+Mitm.prototype[serverResponseKey] = ServerResponse;
+Mitm.prototype[incomingMessageKey] = IncomingMessage;
 
 Mitm.prototype.enable = function () {
   // Connect is called synchronously.
@@ -51,17 +46,6 @@ Mitm.prototype.enable = function () {
   this.stubs.stub(Net, "createConnection", netConnect);
   this.stubs.stub(Http.Agent.prototype, "createConnection", netConnect);
   this.stubs.stub(Tls, "connect", tlsConnect);
-
-  if (NODE_0_10) {
-    // Node v0.10 sets createConnection on the object in the constructor.
-    this.stubs.stub(Http.globalAgent, "createConnection", netConnect);
-
-    // This will create a lot of sockets in tests, but that's the current price
-    // to pay until I find a better way to force a new socket for each
-    // connection.
-    this.stubs.stub(Http.globalAgent, "maxSockets", Infinity);
-    this.stubs.stub(Https.globalAgent, "maxSockets", Infinity);
-  }
 
   // ClientRequest.prototype.onSocket is called synchronously from
   // ClientRequest's constructor and is a convenient place to hook into new
@@ -156,20 +140,7 @@ Mitm.prototype.tlsConnect = function (orig, opts, done) {
 Mitm.prototype.request = function request(socket) {
   if (!socket.mitmServerSocket) return socket;
 
-  // Node >= v0.10.24 < v0.11 will crash with: «Assertion failed:
-  // (!current_buffer), function Execute, file ../src/node_http_parser.cc, line
-  // 387.» if ServerResponse.prototype.write is called from within the
-  // "request" event handler. Call it in the next tick to work around that.
-  var self = this;
-  if (NODE_0_10) {
-    self = Object.create(this);
-    self.emit = _.compose(
-      process.nextTick,
-      Function.bind.bind(this.emit, this)
-    );
-  }
-
-  createRequestAndResponse.call(self, socket.mitmServerSocket);
+  createRequestAndResponse.call(this, socket.mitmServerSocket);
   return socket;
 };
 

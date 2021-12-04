@@ -4,14 +4,12 @@ var Net = require("net");
 var Tls = require("tls");
 var Http = require("http");
 var Https = require("https");
-var Semver = require("semver");
 var Transform = require("stream").Transform;
 var IncomingMessage = Http.IncomingMessage;
 var ServerResponse = Http.ServerResponse;
 var ClientRequest = Http.ClientRequest;
 var EventEmitter = require("events").EventEmitter;
 var Mitm = require("..");
-var NODE_0_10 = Semver.satisfies(process.version, ">= 0.10 < 0.11");
 var newBuffer =
   Buffer.from ||
   function (d, enc) {
@@ -217,11 +215,10 @@ describe("Mitm", function () {
 
     mustConnect(Net);
 
-    if (!NODE_0_10)
-      it("must not return an instance of Tls.TLSSocket", function () {
-        var client = Net.connect({ host: "foo", port: 80 });
-        client.must.not.be.an.instanceof(Tls.TLSSocket);
-      });
+    it("must not return an instance of Tls.TLSSocket", function () {
+      var client = Net.connect({ host: "foo", port: 80 });
+      client.must.not.be.an.instanceof(Tls.TLSSocket);
+    });
 
     it("must not set the encrypted property", function () {
       Net.connect({ host: "foo" }).must.not.have.property("encrypted");
@@ -330,23 +327,20 @@ describe("Mitm", function () {
           process.nextTick(done);
         });
 
-        // Writing latin1 strings was introduced in v6.4.
-        // https://github.com/nodejs/node/commit/28071a130e2137bd14d0762a25f0ad83b7a28259
-        if (Semver.satisfies(process.version, ">= 6.4"))
-          it("must write to server from client given latin1", function (done) {
-            var server;
-            this.mitm.on("connection", function (s) {
-              server = s;
-            });
-            var client = Net.connect({ host: "foo" });
-            client.write("Hello", "latin1");
-
-            server.setEncoding("latin1");
-            process.nextTick(function () {
-              server.read().must.equal("Hello");
-            });
-            process.nextTick(done);
+        it("must write to server from client given latin1", function (done) {
+          var server;
+          this.mitm.on("connection", function (s) {
+            server = s;
           });
+          var client = Net.connect({ host: "foo" });
+          client.write("Hello", "latin1");
+
+          server.setEncoding("latin1");
+          process.nextTick(function () {
+            server.read().must.equal("Hello");
+          });
+          process.nextTick(done);
+        });
 
         it("must write to server from client given a buffer", function (done) {
           var server;
@@ -509,22 +503,19 @@ describe("Mitm", function () {
 
     mustConnect(Tls);
 
-    if (!NODE_0_10)
-      it("must return an instance of Tls.TLSSocket", function () {
-        Tls.connect({ host: "foo", port: 80 }).must.be.an.instanceof(
-          Tls.TLSSocket
-        );
-      });
+    it("must return an instance of Tls.TLSSocket", function () {
+      Tls.connect({ host: "foo", port: 80 }).must.be.an.instanceof(
+        Tls.TLSSocket
+      );
+    });
 
-    if (!NODE_0_10)
-      it("must return an instance of Tls.TLSSocket given port", function () {
-        Tls.connect(80).must.be.an.instanceof(Tls.TLSSocket);
-      });
+    it("must return an instance of Tls.TLSSocket given port", function () {
+      Tls.connect(80).must.be.an.instanceof(Tls.TLSSocket);
+    });
 
-    if (!NODE_0_10)
-      it("must return an instance of Tls.TLSSocket given port and host", function () {
-        Tls.connect(80, "10.0.0.1").must.be.an.instanceof(Tls.TLSSocket);
-      });
+    it("must return an instance of Tls.TLSSocket given port and host", function () {
+      Tls.connect(80, "10.0.0.1").must.be.an.instanceof(Tls.TLSSocket);
+    });
 
     it("must emit secureConnect in next ticks", function (done) {
       var socket = Tls.connect({ host: "foo" });
