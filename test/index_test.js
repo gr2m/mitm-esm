@@ -6,18 +6,16 @@ import stream from "stream";
 import { EventEmitter } from "events";
 
 import Sinon from "sinon";
-import { suite } from "uvu";
+import { test } from "uvu";
 import "must/register.js";
 
 import Mitm from "../index.js";
 
-const test = suite("Mitm");
 let mitm;
 let sinon;
 
 test.before.each(() => {
-  Mitm.passthrough = false;
-  mitm = Mitm();
+  mitm = new Mitm();
   sinon = Sinon.sandbox.create();
 });
 test.after.each(() => {
@@ -165,7 +163,7 @@ function mustConnect(moduleName, module) {
     mitm.disable();
 
     const connect = sinon.spy(module, "connect");
-    const testMitm = Mitm();
+    const testMitm = new Mitm();
     testMitm.on("connect", function (client) {
       client.bypass();
     });
