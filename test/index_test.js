@@ -15,12 +15,6 @@ var ClientRequest = Http.ClientRequest;
 
 var Mitm = require("..");
 
-var newBuffer =
-  Buffer.from ||
-  function (d, enc) {
-    return new Buffer(d, enc);
-  };
-
 const test = suite("Mitm");
 let mitm;
 let sinon;
@@ -335,7 +329,7 @@ test("Socket.prototype.write must write to server from client given binary", () 
       server = s;
     });
     var client = Net.connect({ host: "foo" });
-    client.write("Hello", "binary");
+    client.write("Hello", "utf-8");
 
     server.setEncoding("binary");
     process.nextTick(() => {
@@ -369,10 +363,10 @@ test("Socket.prototype.write must write to server from client given a buffer", (
       server = s;
     });
     var client = Net.connect({ host: "foo" });
-    client.write(newBuffer("Hello", "binary"));
+    client.write(Buffer.from("Hello", "utf-8"));
 
     process.nextTick(() => {
-      assertBuffers(server.read(), newBuffer("Hello", "binary"));
+      assertBuffers(server.read(), Buffer.from("Hello", "utf-8"));
       resolve();
     });
   });
@@ -388,7 +382,7 @@ test("Socket.prototype.write must write to server from client given a UTF-8 stri
     client.write("Hello", "utf8");
 
     process.nextTick(() => {
-      assertBuffers(server.read(), newBuffer("Hello", "binary"));
+      assertBuffers(server.read(), Buffer.from("Hello", "utf-8"));
       resolve();
     });
   });
@@ -404,7 +398,7 @@ test("Socket.prototype.write must write to server from client given a ASCII stri
     client.write("Hello", "ascii");
 
     process.nextTick(() => {
-      assertBuffers(server.read(), newBuffer("Hello", "binary"));
+      assertBuffers(server.read(), Buffer.from("Hello", "utf-8"));
       resolve();
     });
   });
@@ -422,7 +416,7 @@ test("Socket.prototype.write must write to server from client given a UCS-2 stri
     process.nextTick(() => {
       assertBuffers(
         server.read(),
-        newBuffer("H\u0000e\u0000l\u0000l\u0000o\u0000", "binary")
+        Buffer.from("H\u0000e\u0000l\u0000l\u0000o\u0000", "utf-8")
       );
 
       resolve();
