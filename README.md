@@ -125,7 +125,7 @@ Require Mitm.js and invoke it as a function to both create an instance of `Mitm`
 and enable intercepting:
 
 ```javascript
-const Mitm = require("mitm");
+import Mitm from "mitm";
 const mitm = Mitm();
 ```
 
@@ -206,7 +206,7 @@ we can get Mitm.js to support that.
 
 #### Custom HTTP Methods
 
-Unfortunately because [Node.js's web server doesn't seem to support custom HTTP methods](https://github.com/nodejs/node-v0.x-archive/issues/3192) (that is, ones beyond `require("http").METHODS`), Mitm.js doesn't support them out of the box either. The Node.js HTTP parser throws an error given a request with an unsupported method. However, as Mitm.js also supports intercepting at the TCP level, you could hook in your own HTTP parser. I've briefly alluded to it in [issue #63](https://github.com/moll/node-mitm/issues/63).
+Unfortunately because [Node.js's web server doesn't seem to support custom HTTP methods](https://github.com/nodejs/node-v0.x-archive/issues/3192) (that is, ones beyond Node's `http.METHODS`), Mitm.js doesn't support them out of the box either. The Node.js HTTP parser throws an error given a request with an unsupported method. However, as Mitm.js also supports intercepting at the TCP level, you could hook in your own HTTP parser. I've briefly alluded to it in [issue #63](https://github.com/moll/node-mitm/issues/63).
 
 ### Bypassing interception
 

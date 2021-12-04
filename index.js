@@ -1,18 +1,25 @@
-const Net = require("net");
-const Tls = require("tls");
-const Http = require("http");
-const ClientRequest = Http.ClientRequest;
-const Socket = require("./lib/socket");
-const TlsSocket = require("./lib/tls_socket");
-const EventEmitter = require("events").EventEmitter;
-const InternalSocket = require("./lib/internal_socket");
-const Stubs = require("./lib/stubs");
-const slice = Function.call.bind(Array.prototype.slice);
-const normalizeConnectArgs = Net._normalizeArgs;
-const createRequestAndResponse = Http._connectionListener;
-module.exports = Mitm;
+// Native Node APIs
+import Net from "net";
+import Tls from "tls";
+import { ClientRequest, Agent } from "http";
+import { EventEmitter } from "events";
 
-function Mitm() {
+// Internal APIs
+import { _connectionListener as createRequestAndResponse } from "http";
+import { _normalizeArgs as normalizeConnectArgs } from "net";
+import { IncomingMessage } from "_http_incoming";
+import { ServerResponse } from "_http_server";
+import { kIncomingMessage as incomingMessageKey } from "_http_common";
+import { kServerResponse as serverResponseKey } from "_http_server";
+
+import Socket from "./lib/socket.js";
+import TlsSocket from "./lib/tls_socket.js";
+import { createInternalSocketPair } from "./lib/internal_socket.js";
+import Stubs from "./lib/stubs.js";
+
+const slice = Function.call.bind(Array.prototype.slice);
+
+export default function Mitm() {
   if (!(this instanceof Mitm))
     return Mitm.apply(Object.create(Mitm.prototype), arguments).enable();
 
@@ -29,10 +36,6 @@ Mitm.prototype.addListener = EventEmitter.prototype.addListener;
 Mitm.prototype.removeListener = EventEmitter.prototype.removeListener;
 Mitm.prototype.emit = EventEmitter.prototype.emit;
 
-const IncomingMessage = require("_http_incoming").IncomingMessage;
-const ServerResponse = require("_http_server").ServerResponse;
-const incomingMessageKey = require("_http_common").kIncomingMessage;
-const serverResponseKey = require("_http_server").kServerResponse;
 Mitm.prototype[serverResponseKey] = ServerResponse;
 Mitm.prototype[incomingMessageKey] = IncomingMessage;
 
@@ -43,7 +46,7 @@ Mitm.prototype.enable = function () {
 
   this.stubs.stub(Net, "connect", netConnect);
   this.stubs.stub(Net, "createConnection", netConnect);
-  this.stubs.stub(Http.Agent.prototype, "createConnection", netConnect);
+  this.stubs.stub(Agent.prototype, "createConnection", netConnect);
   this.stubs.stub(Tls, "connect", tlsConnect);
 
   // ClientRequest.prototype.onSocket is called synchronously from
@@ -64,7 +67,7 @@ Mitm.prototype.disable = function () {
 };
 
 Mitm.prototype.connect = function connect(orig, Socket, opts, done) {
-  const sockets = InternalSocket.pair();
+  const sockets = createInternalSocketPair();
 
   // Don't set client.connecting to false because there's nothing setting it
   // back to false later. Originally that was done in Socket.prototype.connect
