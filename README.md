@@ -1,7 +1,7 @@
 # Mitm.js
 
 [![NPM version][npm-badge]](https://www.npmjs.com/package/mitm)
-[![Build status][travis-badge]](https://travis-ci.org/moll/node-mitm)
+[![Build Status](https://github.com/gr2m/node-mitm.js/workflows/Test/badge.svg)](https://github.com/gr2m/node-mitm.js/actions?query=workflow%3ATest+branch%3Amaster)
 
 Mitm.js is a library for Node.js (and Io.js) to **intercept and mock** outgoing
 network **TCP** and **HTTP** connections. Mitm.js intercepts and gives you
