@@ -37,12 +37,15 @@
     "coverage": "c8 report --reporter html && open coverage/index.html",
     "lint": "prettier --check \"{lib,test}/**/*.{js,json,ts}\" \"*.{js,json,md}\"",
     "lint:fix": "prettier --write \"{lib,test}/**/*.{js,json,ts}\" \"*.{js,json,md}\"",
-    "test": "c8 --100 uvu"
+    "test": "c8 --100 uvu",
+    "typecheck": "tsc --allowJs --noEmit --esModuleInterop *.js lib/*.js"
   },
   "devDependencies": {
+    "@types/node": "^16.11.11",
     "c8": "^7.10.0",
     "prettier": "^2.5.0",
     "sinon": "^12.0.1",
+    "typescript": "^4.5.2",
     "uvu": "^0.5.2"
   },
   "engines": {
