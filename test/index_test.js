@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 
 import Sinon from "sinon";
 import { test } from "uvu";
-import "must/register.js";
+import * as assert from "uvu/assert";
 
 import Mitm from "../index.js";
 
@@ -24,21 +24,21 @@ test.after.each(() => {
 });
 
 test("must return an instance of Mitm when called as a function", () => {
-  mitm.must.be.an.instanceof(Mitm);
+  assert.instance(mitm, Mitm);
 });
 
 function mustConnect(moduleName, module) {
   test(`${moduleName}: must return an instance of net.Socket`, () => {
     const socket = module.connect({ host: "foo", port: 80 });
-    socket.must.be.an.instanceof(net.Socket);
+    assert.instance(socket, net.Socket);
   });
 
   test(`${moduleName}: must return an instance of net.Socket given port`, () => {
-    module.connect(80).must.be.an.instanceof(net.Socket);
+    assert.instance(module.connect(80), net.Socket);
   });
 
   test(`${moduleName}: must return an instance of net.Socket given port and host`, () => {
-    module.connect(80, "10.0.0.1").must.be.an.instanceof(net.Socket);
+    assert.instance(module.connect(80, "10.0.0.1"), net.Socket);
   });
 
   test(`${moduleName}: must emit connect on Mitm`, () => {
@@ -47,9 +47,9 @@ function mustConnect(moduleName, module) {
     const opts = { host: "foo" };
     const socket = module.connect(opts);
 
-    onConnect.callCount.must.equal(1);
-    onConnect.firstCall.args[0].must.equal(socket);
-    onConnect.firstCall.args[1].must.equal(opts);
+    assert.equal(onConnect.callCount, 1);
+    assert.equal(onConnect.firstCall.args[0], socket);
+    assert.equal(onConnect.firstCall.args[1], opts);
   });
 
   test(`${moduleName}: must emit connect on Mitm with options object given host and port`, () => {
@@ -57,9 +57,9 @@ function mustConnect(moduleName, module) {
     mitm.on("connect", onConnect);
     const socket = module.connect(9, "127.0.0.1");
 
-    onConnect.callCount.must.equal(1);
-    onConnect.firstCall.args[0].must.equal(socket);
-    onConnect.firstCall.args[1].must.eql({ host: "127.0.0.1", port: 9 });
+    assert.equal(onConnect.callCount, 1);
+    assert.equal(onConnect.firstCall.args[0], socket);
+    assert.equal(onConnect.firstCall.args[1], { host: "127.0.0.1", port: 9 });
   });
 
   test(`${moduleName}: must emit connection on Mitm`, () => {
@@ -68,10 +68,10 @@ function mustConnect(moduleName, module) {
     const opts = { host: "foo" };
     const socket = module.connect(opts);
 
-    onConnection.callCount.must.equal(1);
-    onConnection.firstCall.args[0].must.be.an.instanceof(net.Socket);
-    onConnection.firstCall.args[0].must.not.equal(socket);
-    onConnection.firstCall.args[1].must.equal(opts);
+    assert.equal(onConnection.callCount, 1);
+    assert.instance(onConnection.firstCall.args[0], net.Socket);
+    assert.not.equal(onConnection.firstCall.args[0], socket);
+    assert.equal(onConnection.firstCall.args[1], opts);
   });
 
   test(`${moduleName}: must emit connect on socket in next ticks`, () => {
@@ -137,7 +137,7 @@ function mustConnect(moduleName, module) {
 
       client.setEncoding("utf8");
       client.on("data", function (data) {
-        data.must.equal("Hello");
+        assert.equal(data, "Hello");
       });
       client.on("data", resolve);
     });
@@ -152,8 +152,8 @@ function mustConnect(moduleName, module) {
       module
         .connect({ host: "127.0.0.1", port: 9 })
         .on("error", function (err) {
-          err.must.be.an.instanceof(Error);
-          err.message.must.include("ECONNREFUSED");
+          assert.instance(err, Error);
+          assert.match(err.message, /ECONNREFUSED/);
           resolve();
         });
     });
@@ -170,8 +170,8 @@ function mustConnect(moduleName, module) {
 
     try {
       module.connect({ host: "127.0.0.1", port: 9 }).on("error", noop);
-      connect.callCount.must.equal(1);
-      connect.firstCall.args[0].must.eql({ host: "127.0.0.1", port: 9 });
+      assert.equal(connect.callCount, 1);
+      assert.equal(connect.firstCall.args[0], { host: "127.0.0.1", port: 9 });
     } finally {
       // Working around Mocha's context bug(s) and poor design decision
       // with a manual `finally`.
@@ -191,7 +191,7 @@ function mustConnect(moduleName, module) {
       client.on(
         "error",
         process.nextTick.bind(null, () => {
-          onConnect.callCount.must.equal(0);
+          assert.equal(onConnect.callCount, 0);
           resolve();
         })
       );
@@ -205,7 +205,7 @@ function mustConnect(moduleName, module) {
     const onConnection = Sinon.spy();
     mitm.on("connection", onConnection);
     module.connect({ host: "127.0.0.1", port: 9 }).on("error", noop);
-    onConnection.callCount.must.equal(0);
+    assert.equal(onConnection.callCount, 0);
   });
 }
 
@@ -215,15 +215,15 @@ test("net.connect must not return an instance of tls.TLSSocket", () => {
   const client = net.connect({ host: "foo", port: 80 });
   // we don't use `instanceof(tls.TLSSocket)` here because our TlsSocket
   // implementation doesn't extend tls.TLSSocket.
-  client.must.not.have.property("getCertificate");
+  assert.not.ok("getCertificate" in client);
 });
 
 test("net.connect must not set the encrypted property", () => {
-  net.connect({ host: "foo" }).must.not.have.property("encrypted");
+  assert.not.ok("encrypted" in net.connect({ host: "foo" }));
 });
 
 test("net.connect must not set the authorized property", () => {
-  net.connect({ host: "foo" }).must.not.have.property("authorized");
+  assert.not.ok("authorized" in net.connect({ host: "foo" }));
 });
 
 test("net.connect must not emit secureConnect on client", () => {
@@ -257,7 +257,7 @@ test("Socket.prototype.write must write to client from server", () => {
 
     client.setEncoding("utf8");
     client.on("data", function (data) {
-      data.must.equal("Hello ☺️");
+      assert.equal(data, "Hello ☺️");
     });
     client.on("data", resolve);
   });
@@ -273,7 +273,7 @@ test("Socket.prototype.write must write to client from server in the next tick",
 
     let ticked = false;
     client.once("data", () => {
-      ticked.must.be.true();
+      assert.equal(ticked, true);
       resolve();
     });
     server.write("Hello");
@@ -292,7 +292,7 @@ test("Socket.prototype.write must write to server from client", () => {
 
     server.setEncoding("utf8");
     process.nextTick(() => {
-      server.read().must.equal("Hello ☺️");
+      assert.equal(server.read(), "Hello ☺️");
     });
     process.nextTick(resolve);
   });
@@ -308,7 +308,7 @@ test("Socket.prototype.write must write to server from client in the next tick",
 
     let ticked = false;
     server.once("data", () => {
-      ticked.must.be.true();
+      assert.equal(ticked, true);
       resolve();
     });
     client.write("Hello");
@@ -329,7 +329,7 @@ test("Socket.prototype.write must write to server from client given binary", () 
 
     server.setEncoding("binary");
     process.nextTick(() => {
-      server.read().must.equal("Hello");
+      assert.equal(server.read(), "Hello");
     });
     process.nextTick(resolve);
   });
@@ -346,7 +346,7 @@ test("Socket.prototype.write must write to server from client given latin1", () 
 
     server.setEncoding("latin1");
     process.nextTick(() => {
-      server.read().must.equal("Hello");
+      assert.equal(server.read(), "Hello");
     });
     process.nextTick(resolve);
   });
@@ -362,7 +362,7 @@ test("Socket.prototype.write must write to server from client given a buffer", (
     client.write(Buffer.from("Hello", "utf-8"));
 
     process.nextTick(() => {
-      assertBuffers(server.read(), Buffer.from("Hello", "utf-8"));
+      assert.equal(server.read(), Buffer.from("Hello", "utf-8"));
       resolve();
     });
   });
@@ -378,7 +378,7 @@ test("Socket.prototype.write must write to server from client given a UTF-8 stri
     client.write("Hello", "utf8");
 
     process.nextTick(() => {
-      assertBuffers(server.read(), Buffer.from("Hello", "utf-8"));
+      assert.equal(server.read(), Buffer.from("Hello", "utf-8"));
       resolve();
     });
   });
@@ -394,7 +394,7 @@ test("Socket.prototype.write must write to server from client given a ASCII stri
     client.write("Hello", "ascii");
 
     process.nextTick(() => {
-      assertBuffers(server.read(), Buffer.from("Hello", "utf-8"));
+      assert.equal(server.read(), Buffer.from("Hello", "utf-8"));
       resolve();
     });
   });
@@ -410,7 +410,7 @@ test("Socket.prototype.write must write to server from client given a UCS-2 stri
     client.write("Hello", "ucs2");
 
     process.nextTick(() => {
-      assertBuffers(
+      assert.equal(
         server.read(),
         Buffer.from("H\u0000e\u0000l\u0000l\u0000o\u0000", "utf-8")
       );
@@ -471,7 +471,7 @@ test("Socket.prototype.pipe must allow piping to itself", () => {
 
     client.setEncoding("utf8");
     client.on("data", function (data) {
-      data.must.equal("HELLO");
+      assert.equal(data, "HELLO");
     });
     client.on("data", resolve);
   });
@@ -492,7 +492,7 @@ test("Socket.prototype.destroy must emit end when destroyed on server", () => {
 });
 
 test("net.createConnection must be equal to net.connect", () => {
-  net.createConnection.must.equal(net.connect);
+  assert.equal(net.createConnection, net.connect);
 });
 
 mustConnect("tls.connect", tls);
@@ -500,19 +500,19 @@ mustConnect("tls.connect", tls);
 test("tls.connect must return an instance of tls.TLSSocket", () => {
   // we don't use `instanceof(tls.TLSSocket)` here because our TlsSocket
   // implementation doesn't extend tls.TLSSocket.
-  tls.connect({ host: "foo", port: 80 }).must.have.property("getCertificate");
+  assert.ok("getCertificate" in tls.connect({ host: "foo", port: 80 }));
 });
 
 test("tls.connect must return an instance of tls.TLSSocket given port", () => {
   // we don't use `instanceof(tls.TLSSocket)` here because our TlsSocket
   // implementation doesn't extend tls.TLSSocket.
-  tls.connect(80).must.have.property("getCertificate");
+  assert.ok("getCertificate" in tls.connect(80));
 });
 
 test("tls.connect must return an instance of tls.TLSSocket given port and host", () => {
   // we don't use `instanceof(tls.TLSSocket)` here because our TlsSocket
   // implementation doesn't extend tls.TLSSocket.
-  tls.connect(80, "10.0.0.1").must.have.property("getCertificate");
+  assert.ok("getCertificate" in tls.connect(80, "10.0.0.1"));
 });
 
 test("tls.connect must emit secureConnect in next ticks", () => {
@@ -549,7 +549,7 @@ test("tls.connect must call back on secureConnect", () => {
     let connected = false;
 
     const client = tls.connect({ host: "foo" }, () => {
-      connected.must.be.true();
+      assert.equal(connected, true);
       resolve();
     });
 
@@ -560,23 +560,23 @@ test("tls.connect must call back on secureConnect", () => {
 });
 
 test("tls.connect must set encrypted true", () => {
-  tls.connect({ host: "foo" }).encrypted.must.be.true();
+  assert.equal(tls.connect({ host: "foo" }).encrypted, true);
 });
 
 test("tls.connect must set authorized true", () => {
-  tls.connect({ host: "foo" }).authorized.must.be.true();
+  assert.equal(tls.connect({ host: "foo" }).authorized, true);
 });
 
 function mustRequest(context, request) {
   test(`${context}: must return http.ClientRequest`, () => {
-    request({ host: "foo" }).must.be.an.instanceof(http.ClientRequest);
+    assert.instance(request({ host: "foo" }), http.ClientRequest);
   });
 
   test(`${context}: must emit connect on Mitm`, () => {
     const onConnect = Sinon.spy();
     mitm.on("connect", onConnect);
     request({ host: "foo" });
-    onConnect.callCount.must.equal(1);
+    assert.equal(onConnect.callCount, 1);
   });
 
   test(`${context}: must emit connect on Mitm after multiple connections`, () => {
@@ -585,14 +585,14 @@ function mustRequest(context, request) {
     request({ host: "foo" });
     request({ host: "foo" });
     request({ host: "foo" });
-    onConnect.callCount.must.equal(3);
+    assert.equal(onConnect.callCount, 3);
   });
 
   test(`${context}: must emit connection on Mitm`, () => {
     const onConnection = Sinon.spy();
     mitm.on("connection", onConnection);
     request({ host: "foo" });
-    onConnection.callCount.must.equal(1);
+    assert.equal(onConnection.callCount, 1);
   });
 
   test(`${context}: must emit connection on Mitm after multiple connections`, () => {
@@ -601,7 +601,7 @@ function mustRequest(context, request) {
     request({ host: "foo" });
     request({ host: "foo" });
     request({ host: "foo" });
-    onConnection.callCount.must.equal(3);
+    assert.equal(onConnection.callCount, 3);
   });
 
   test(`${context}: must emit request on Mitm`, () => {
@@ -610,9 +610,9 @@ function mustRequest(context, request) {
       client.end();
 
       mitm.on("request", function (req, res) {
-        req.must.be.an.instanceof(http.IncomingMessage);
-        req.must.not.equal(client);
-        res.must.be.an.instanceof(http.ServerResponse);
+        assert.instance(req, http.IncomingMessage);
+        assert.not.equal(req, client);
+        assert.instance(res, http.ServerResponse);
         resolve();
       });
     });
@@ -657,8 +657,8 @@ function mustRequest(context, request) {
         client.bypass();
       });
       request({ host: "127.0.0.1" }).on("error", function (err) {
-        err.must.be.an.instanceof(Error);
-        err.message.must.include("ECONNREFUSED");
+        assert.instance(err, Error);
+        assert.match(err.message, /ECONNREFUSED/);
         resolve();
       });
     });
@@ -672,7 +672,7 @@ function mustRequest(context, request) {
       const onRequest = Sinon.spy();
       mitm.on("request", onRequest);
       request({ host: "127.0.0.1" }).on("error", function (_err) {
-        onRequest.callCount.must.equal(0);
+        assert.equal(onRequest.callCount, 0);
         resolve();
       });
     });
@@ -729,7 +729,7 @@ test("http.IncomingMessage must have URL", () => {
     http.request({ host: "foo", path: "/foo" }).end();
 
     mitm.on("request", function (req) {
-      req.url.must.equal("/foo");
+      assert.equal(req.url, "/foo");
       resolve();
     });
   });
@@ -742,7 +742,7 @@ test("http.IncomingMessage must have headers", () => {
     req.end();
 
     mitm.on("request", function (req) {
-      req.headers["content-type"].must.equal("application/json");
+      assert.equal(req.headers["content-type"], "application/json");
       resolve();
     });
   });
@@ -756,7 +756,7 @@ test("http.IncomingMessage must have body", () => {
     mitm.on("request", function (req, _res) {
       req.setEncoding("utf8");
       req.on("data", function (data) {
-        data.must.equal("Hello");
+        assert.equal(data, "Hello");
         resolve();
       });
     });
@@ -767,7 +767,7 @@ test("http.IncomingMessage must have a reference to the http.ServerResponse", ()
   return new Promise((resolve) => {
     http.request({ host: "foo", method: "POST" }).end();
     mitm.on("request", function (req, res) {
-      req.res.must.equal(res);
+      assert.equal(req.res, res);
     });
     mitm.on("request", resolve);
   });
@@ -784,11 +784,11 @@ test("http.ServerResponse must respond with status, headers and body", () => {
     http
       .request({ host: "foo" })
       .on("response", function (res) {
-        res.statusCode.must.equal(442);
-        res.headers["content-type"].must.equal("application/json");
+        assert.equal(res.statusCode, 442);
+        assert.equal(res.headers["content-type"], "application/json");
         res.setEncoding("utf8");
         res.once("data", function (data) {
-          data.must.equal("Hi!");
+          assert.equal(data, "Hi!");
           resolve();
         });
       })
@@ -800,7 +800,7 @@ test("http.ServerResponse must have a reference to the http.IncomingMessage", ()
   return new Promise((resolve) => {
     http.request({ host: "foo", method: "POST" }).end();
     mitm.on("request", function (req, res) {
-      res.req.must.equal(req);
+      assert.equal(res.req, req);
     });
     mitm.on("request", resolve);
   });
@@ -858,11 +858,11 @@ test("http.ServerResponse.prototype.end must make http.IncomingMessage emit end"
 });
 
 test("Mitm.prototype.addListener must be an alias to EventEmitter.prototype.addListener", () => {
-  Mitm.prototype.addListener.must.equal(EventEmitter.prototype.addListener);
+  assert.equal(Mitm.prototype.addListener, EventEmitter.prototype.addListener);
 });
 
 test("Mitm.prototype.off  must be an alias to EventEmitter.prototype.removeListener", () => {
-  Mitm.prototype.off.must.equal(EventEmitter.prototype.removeListener);
+  assert.equal(Mitm.prototype.off, EventEmitter.prototype.removeListener);
 });
 
 test.run();
@@ -878,10 +878,5 @@ Upcase.prototype = Object.create(stream.Transform.prototype, {
 Upcase.prototype._transform = function (chunk, _enc, done) {
   done(null, String(chunk).toUpperCase());
 };
-
-function assertBuffers(a, b) {
-  if (a.equals) a.equals(b).must.be.true();
-  else a.toString("utf8").must.equal(b.toString("utf8"));
-}
 
 function noop() {}
