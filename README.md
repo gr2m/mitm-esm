@@ -1,6 +1,6 @@
 # `mitm-esm`
 
-[![Build Status](https://github.com/gr2m/node-mitm.js/workflows/Test/badge.svg)](https://github.com/gr2m/node-mitm.js/actions?query=workflow%3ATest+branch%3Aesm-and-other-musings)
+[[![Test](https://github.com/gr2m/mitm-esm/actions/workflows/test.yml/badge.svg)](https://github.com/gr2m/mitm-esm/actions/workflows/test.yml)](https://github.com/gr2m/mitm-esm/actions/workflows/test.yml)
 
 `mitm-esm` is the native ES Module version of [moll/node-mitm](https://github.com/moll/node-mitm).
 
