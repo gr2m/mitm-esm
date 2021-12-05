@@ -5,18 +5,7 @@ import Tls from "tls";
 import { ClientRequest, Agent } from "http";
 import { EventEmitter } from "events";
 
-// @ts-expect-error - internal API
-import { _connectionListener as createRequestAndResponse } from "http";
-// @ts-expect-error - internal API
-import { _normalizeArgs as normalizeConnectArgs } from "net";
-// @ts-expect-error - internal API
-import { IncomingMessage } from "_http_incoming";
-// @ts-expect-error - internal API
-import { ServerResponse } from "_http_server";
-// @ts-expect-error - internal API
-import { kIncomingMessage as incomingMessageKey } from "_http_common";
-// @ts-expect-error - internal API
-import { kServerResponse as serverResponseKey } from "_http_server";
+import { NODE_INTERNALS } from "./lib/node_internals.js";
 
 import Socket from "./lib/socket.js";
 import TlsSocket from "./lib/tls_socket.js";
@@ -35,8 +24,8 @@ export default class Mitm extends EventEmitter {
       response.req = request;
     });
 
-    this[serverResponseKey] = ServerResponse;
-    this[incomingMessageKey] = IncomingMessage;
+    this[NODE_INTERNALS.serverResponseKey] = NODE_INTERNALS.ServerResponse;
+    this[NODE_INTERNALS.incomingMessageKey] = NODE_INTERNALS.IncomingMessage;
 
     this.enable();
   }
@@ -109,7 +98,7 @@ export default class Mitm extends EventEmitter {
   }
 
   tcpConnect(orig, ...args) {
-    const [opts, done] = normalizeConnectArgs(args);
+    const [opts, done] = NODE_INTERNALS.normalizeConnectArgs(args);
 
     // The callback is originally bound to the connect event in
     // Socket.prototype.connect.
@@ -123,7 +112,7 @@ export default class Mitm extends EventEmitter {
   }
 
   tlsConnect(orig, ...args) {
-    const [opts, done] = normalizeConnectArgs(args);
+    const [opts, done] = NODE_INTERNALS.normalizeConnectArgs(args);
 
     const client = this.connect(orig, TlsSocket, opts, done);
     if (client.mitmServerSocket == null) return client;
@@ -137,7 +126,7 @@ export default class Mitm extends EventEmitter {
   request(socket) {
     if (!socket.mitmServerSocket) return socket;
 
-    createRequestAndResponse.call(this, socket.mitmServerSocket);
+    NODE_INTERNALS.createRequestAndResponse.call(this, socket.mitmServerSocket);
     return socket;
   }
 }
