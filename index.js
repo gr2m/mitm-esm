@@ -1,7 +1,7 @@
 // @ts-check
 
-import Net from "net";
-import Tls from "tls";
+import net from "net";
+import tls from "tls";
 import { ClientRequest, Agent } from "http";
 import { EventEmitter } from "events";
 
@@ -30,33 +30,87 @@ export default class Mitm extends EventEmitter {
     this.enable();
   }
 
+  /**
+   * @returns {Mitm}
+   */
   enable() {
     // Connect is called synchronously.
-    const netConnect = this.tcpConnect.bind(this, Net.connect);
-    const tlsConnect = this.tlsConnect.bind(this, Tls.connect);
+    const netConnect = this.onNetConnect.bind(this, net.connect);
+    const tlsConnect = this.onTlsConnect.bind(this, tls.connect);
 
-    this.stubs.stub(Net, "connect", netConnect);
-    this.stubs.stub(Net, "createConnection", netConnect);
+    this.stubs.stub(net, "connect", netConnect);
+    this.stubs.stub(net, "createConnection", netConnect);
     this.stubs.stub(Agent.prototype, "createConnection", netConnect);
-    this.stubs.stub(Tls, "connect", tlsConnect);
+    this.stubs.stub(tls, "connect", tlsConnect);
 
     // ClientRequest.prototype.onSocket is called synchronously from ClientRequest's constructor
     // and is a convenient place to hook into new ClientRequest instances.
-    const origOnSocket = ClientRequest.prototype.onSocket;
+    const originalOnSocket = ClientRequest.prototype.onSocket;
     const self = this;
     this.stubs.stub(ClientRequest.prototype, "onSocket", function (socket) {
-      origOnSocket.call(this, socket);
-      self.request(socket);
+      originalOnSocket.call(this, socket);
+      self.clientRequestOnSocket(socket);
     });
 
     return this;
   }
 
+  /**
+   * @returns {Mitm}
+   */
   disable() {
-    return this.stubs.restore(), this;
+    this.stubs.restore();
+    return this;
   }
 
-  connect(orig, Socket, opts, done) {
+  /**
+   * @param {typeof net.connect} originalNetConnect
+   * @param  {...any} args
+   * @returns {Socket}
+   */
+  onNetConnect(originalNetConnect, ...args) {
+    const [options, callback] = NODE_INTERNALS.normalizeConnectArgs(args);
+
+    const request = this.connect(originalNetConnect, Socket, options, callback);
+    if (request.mitmResponseSocket == null) return request;
+    if (callback) request.once("connect", callback);
+
+    return request;
+  }
+
+  /**
+   * @param {typeof tls.connect} originalTlsConnect
+   * @param  {...any} args
+   * @returns {TlsSocket}
+   */
+  onTlsConnect(originalTlsConnect, ...args) {
+    const [options, callback] = NODE_INTERNALS.normalizeConnectArgs(args);
+
+    const request = this.connect(
+      originalTlsConnect,
+      TlsSocket,
+      options,
+      callback
+    );
+    if (request.mitmResponseSocket == null) return request;
+    if (callback) request.once("secureConnect", callback);
+
+    setTimeout(request.emit.bind(request, "secureConnect"));
+
+    return request;
+  }
+
+  clientRequestOnSocket(socket) {
+    if (!socket.mitmResponseSocket) return socket;
+
+    NODE_INTERNALS.createRequestAndResponse.call(
+      this,
+      socket.mitmResponseSocket
+    );
+    return socket;
+  }
+
+  connect(originalConnect, Socket, options, callback) {
     const [requestSocket, responseSocket] = createInternalSocketPair();
 
     // Don't set request.connecting to false because there's nothing setting it
@@ -64,16 +118,11 @@ export default class Mitm extends EventEmitter {
     // and its afterConnect handler, but we're not calling that.
     const request = new Socket({
       handle: requestSocket,
-
-      // Node v10 expects readable and writable to be set at Socket creation time.
-      readable: true,
-      writable: true,
-
-      ...opts,
+      ...options,
     });
 
-    this.emit("connect", request, opts);
-    if (request.bypassed) return orig.call(this, opts, done);
+    this.emit("connect", request, options);
+    if (request.bypassed) return originalConnect.call(this, options, callback);
 
     const response = new Socket({
       handle: responseSocket,
@@ -85,46 +134,16 @@ export default class Mitm extends EventEmitter {
     // for net connects and to pass use it as a response when intercepting http(s) requests.
     request.mitmResponseSocket = response;
 
-    this.emit("connection", response, opts);
+    this.emit("connection", response, options);
 
-    // Ensure connect is emitted in next ticks, otherwise it would be impossible
-    // to listen to it after calling Net.connect or listening to it after the
+    // Ensure connect is emitted asynchronously, otherwise it would be impossible
+    // to listen to it after calling net.connect or listening to it after the
     // ClientRequest emits "socket".
-    setTimeout(request.emit.bind(request, "connect"));
-    setTimeout(response.emit.bind(response, "connect"));
+    setTimeout(() => {
+      request.emit("connect");
+      response.emit("connect");
+    });
 
     return request;
-  }
-
-  tcpConnect(orig, ...args) {
-    const [opts, callback] = NODE_INTERNALS.normalizeConnectArgs(args);
-
-    const client = this.connect(orig, Socket, opts, callback);
-    if (client.mitmResponseSocket == null) return client;
-    if (callback) client.once("connect", callback);
-
-    return client;
-  }
-
-  tlsConnect(orig, ...args) {
-    const [opts, callback] = NODE_INTERNALS.normalizeConnectArgs(args);
-
-    const client = this.connect(orig, TlsSocket, opts, callback);
-    if (client.mitmResponseSocket == null) return client;
-    if (callback) client.once("secureConnect", callback);
-
-    setTimeout(client.emit.bind(client, "secureConnect"));
-
-    return client;
-  }
-
-  request(socket) {
-    if (!socket.mitmResponseSocket) return socket;
-
-    NODE_INTERNALS.createRequestAndResponse.call(
-      this,
-      socket.mitmResponseSocket
-    );
-    return socket;
   }
 }
