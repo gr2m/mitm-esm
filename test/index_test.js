@@ -5,18 +5,16 @@ import https from "https";
 import stream from "stream";
 import { EventEmitter } from "events";
 
-import Sinon from "sinon";
+import sinon from "sinon";
 import { test } from "uvu";
 import * as assert from "uvu/assert";
 
 import Mitm from "../index.js";
 
 let mitm;
-let sinon;
 
 test.before.each(() => {
   mitm = new Mitm();
-  sinon = Sinon.sandbox.create();
 });
 test.after.each(() => {
   mitm.disable();
@@ -42,7 +40,7 @@ function mustConnect(moduleName, module) {
   });
 
   test(`${moduleName}: must emit connect on Mitm`, () => {
-    const onConnect = Sinon.spy();
+    const onConnect = sinon.spy();
     mitm.on("connect", onConnect);
     const opts = { host: "foo" };
     const socket = module.connect(opts);
@@ -53,7 +51,7 @@ function mustConnect(moduleName, module) {
   });
 
   test(`${moduleName}: must emit connect on Mitm with options object given host and port`, () => {
-    const onConnect = Sinon.spy();
+    const onConnect = sinon.spy();
     mitm.on("connect", onConnect);
     const socket = module.connect(9, "127.0.0.1");
 
@@ -63,7 +61,7 @@ function mustConnect(moduleName, module) {
   });
 
   test(`${moduleName}: must emit connection on Mitm`, () => {
-    const onConnection = Sinon.spy();
+    const onConnection = sinon.spy();
     mitm.on("connection", onConnection);
     const opts = { host: "foo" };
     const socket = module.connect(opts);
@@ -185,7 +183,7 @@ function mustConnect(moduleName, module) {
         client.bypass();
       });
 
-      const onConnect = Sinon.spy();
+      const onConnect = sinon.spy();
       const client = module.connect({ host: "127.0.0.1", port: 9 }, onConnect);
 
       client.on(
@@ -202,7 +200,7 @@ function mustConnect(moduleName, module) {
     mitm.on("connect", function (client) {
       client.bypass();
     });
-    const onConnection = Sinon.spy();
+    const onConnection = sinon.spy();
     mitm.on("connection", onConnection);
     module.connect({ host: "127.0.0.1", port: 9 }).on("error", noop);
     assert.equal(onConnection.callCount, 0);
@@ -573,14 +571,14 @@ function mustRequest(context, request) {
   });
 
   test(`${context}: must emit connect on Mitm`, () => {
-    const onConnect = Sinon.spy();
+    const onConnect = sinon.spy();
     mitm.on("connect", onConnect);
     request({ host: "foo" });
     assert.equal(onConnect.callCount, 1);
   });
 
   test(`${context}: must emit connect on Mitm after multiple connections`, () => {
-    const onConnect = Sinon.spy();
+    const onConnect = sinon.spy();
     mitm.on("connect", onConnect);
     request({ host: "foo" });
     request({ host: "foo" });
@@ -589,14 +587,14 @@ function mustRequest(context, request) {
   });
 
   test(`${context}: must emit connection on Mitm`, () => {
-    const onConnection = Sinon.spy();
+    const onConnection = sinon.spy();
     mitm.on("connection", onConnection);
     request({ host: "foo" });
     assert.equal(onConnection.callCount, 1);
   });
 
   test(`${context}: must emit connection on Mitm after multiple connections`, () => {
-    const onConnection = Sinon.spy();
+    const onConnection = sinon.spy();
     mitm.on("connection", onConnection);
     request({ host: "foo" });
     request({ host: "foo" });
@@ -669,7 +667,7 @@ function mustRequest(context, request) {
       mitm.on("connect", function (client) {
         client.bypass();
       });
-      const onRequest = Sinon.spy();
+      const onRequest = sinon.spy();
       mitm.on("request", onRequest);
       request({ host: "127.0.0.1" }).on("error", function (_err) {
         assert.equal(onRequest.callCount, 0);
