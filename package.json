@@ -1,5 +1,5 @@
 {
-  "name": "mitm",
+  "name": "mitm-esm",
   "version": "1.7.2",
   "type": "module",
   "description": "Intercept and mock outgoing network TCP connections and HTTP requests for testing. Intercepts and gives you a Net.Socket, Http.IncomingMessage and Http.ServerResponse to test and respond with. Useful when testing code that hits remote servers.",
@@ -15,21 +15,16 @@
     "test",
     "webmock"
   ],
-  "homepage": "https://github.com/moll/node-mitm",
-  "bugs": "https://github.com/moll/node-mitm/issues",
   "author": {
     "name": "Andri Möll",
     "email": "andri@dot.ee",
     "url": "http://themoll.com"
   },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/moll/node-mitm.git"
-  },
+  "repository": "github:gr2m/mitm-esm",
   "licenses": [
     {
       "type": "LAGPL",
-      "url": "https://github.com/moll/node-mitm/blob/master/LICENSE"
+      "url": "https://github.com/gr2m/mitm-esm/blob/master/LICENSE"
     }
   ],
   "exports": "./index.js",
