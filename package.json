@@ -34,13 +34,13 @@
   ],
   "exports": "./index.js",
   "scripts": {
-    "coverage": "nyc report --reporter html && open coverage/index.html",
+    "coverage": "c8 report --reporter html && open coverage/index.html",
     "lint": "prettier --check \"{lib,test}/**/*.{js,json,ts}\" \"*.{js,json,md}\"",
     "lint:fix": "prettier --write \"{lib,test}/**/*.{js,json,ts}\" \"*.{js,json,md}\"",
-    "test": "nyc uvu"
+    "test": "c8 --100 uvu"
   },
   "devDependencies": {
-    "nyc": "^15.1.0",
+    "c8": "^7.10.0",
     "prettier": "^2.5.0",
     "sinon": ">= 1.9 < 2",
     "uvu": "^0.5.2"
