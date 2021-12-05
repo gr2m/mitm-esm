@@ -213,7 +213,9 @@ mustConnect("net.connect", net);
 
 test("net.connect must not return an instance of tls.TLSSocket", () => {
   const client = net.connect({ host: "foo", port: 80 });
-  client.must.not.be.an.instanceof(tls.TLSSocket);
+  // we don't use `instanceof(tls.TLSSocket)` here because our TlsSocket
+  // implementation doesn't extend tls.TLSSocket.
+  client.must.not.have.property("getCertificate");
 });
 
 test("net.connect must not set the encrypted property", () => {
@@ -496,14 +498,20 @@ test("net.createConnection must be equal to net.connect", () => {
 mustConnect("tls.connect", tls);
 
 test("tls.connect must return an instance of tls.TLSSocket", () => {
+  // we don't use `instanceof(tls.TLSSocket)` here because our TlsSocket
+  // implementation doesn't extend tls.TLSSocket.
   tls.connect({ host: "foo", port: 80 }).must.have.property("getCertificate");
 });
 
 test("tls.connect must return an instance of tls.TLSSocket given port", () => {
+  // we don't use `instanceof(tls.TLSSocket)` here because our TlsSocket
+  // implementation doesn't extend tls.TLSSocket.
   tls.connect(80).must.have.property("getCertificate");
 });
 
 test("tls.connect must return an instance of tls.TLSSocket given port and host", () => {
+  // we don't use `instanceof(tls.TLSSocket)` here because our TlsSocket
+  // implementation doesn't extend tls.TLSSocket.
   tls.connect(80, "10.0.0.1").must.have.property("getCertificate");
 });
 
