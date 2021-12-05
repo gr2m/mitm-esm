@@ -57,13 +57,13 @@ export default class Mitm extends EventEmitter {
   }
 
   connect(orig, Socket, opts, done) {
-    const sockets = createInternalSocketPair();
+    const [requestSocket, responseSocket] = createInternalSocketPair();
 
-    // Don't set client.connecting to false because there's nothing setting it
+    // Don't set request.connecting to false because there's nothing setting it
     // back to false later. Originally that was done in Socket.prototype.connect
     // and its afterConnect handler, but we're not calling that.
-    const client = new Socket({
-      handle: sockets[0],
+    const request = new Socket({
+      handle: requestSocket,
 
       // Node v10 expects readable and writable to be set at Socket creation time.
       readable: true,
@@ -72,51 +72,46 @@ export default class Mitm extends EventEmitter {
       ...opts,
     });
 
-    this.emit("connect", client, opts);
-    if (client.bypassed) return orig.call(this, opts, done);
+    this.emit("connect", request, opts);
+    if (request.bypassed) return orig.call(this, opts, done);
 
-    // Don't use just "server" because socket.server is used in Node v8.12 and
-    // Node v9.6 and later for modifying the HTTP server response and parser
-    // classes. If unset, it's set to the used HTTP server (Mitm instance in our
-    // case) in _http_server.js.
-    // See also: https://github.com/nodejs/node/issues/13435.
-    const server = (client.mitmServerSocket = new Socket({
-      handle: sockets[1],
+    const response = new Socket({
+      handle: responseSocket,
       readable: true,
       writable: true,
-    }));
+    });
 
-    this.emit("connection", server, opts);
+    // We use `.mitmResponseSocket` as a means to check if a request is intercepted
+    // for net connects and to pass use it as a response when intercepting http(s) requests.
+    request.mitmResponseSocket = response;
+
+    this.emit("connection", response, opts);
 
     // Ensure connect is emitted in next ticks, otherwise it would be impossible
     // to listen to it after calling Net.connect or listening to it after the
     // ClientRequest emits "socket".
-    setTimeout(client.emit.bind(client, "connect"));
-    setTimeout(server.emit.bind(server, "connect"));
+    setTimeout(request.emit.bind(request, "connect"));
+    setTimeout(response.emit.bind(response, "connect"));
 
-    return client;
+    return request;
   }
 
   tcpConnect(orig, ...args) {
-    const [opts, done] = NODE_INTERNALS.normalizeConnectArgs(args);
+    const [opts, callback] = NODE_INTERNALS.normalizeConnectArgs(args);
 
-    // The callback is originally bound to the connect event in
-    // Socket.prototype.connect.
-    const client = this.connect(orig, Socket, opts, done);
-    if (client.mitmServerSocket == null) {
-      return client;
-    }
-    if (done) client.once("connect", done);
+    const client = this.connect(orig, Socket, opts, callback);
+    if (client.mitmResponseSocket == null) return client;
+    if (callback) client.once("connect", callback);
 
     return client;
   }
 
   tlsConnect(orig, ...args) {
-    const [opts, done] = NODE_INTERNALS.normalizeConnectArgs(args);
+    const [opts, callback] = NODE_INTERNALS.normalizeConnectArgs(args);
 
-    const client = this.connect(orig, TlsSocket, opts, done);
-    if (client.mitmServerSocket == null) return client;
-    if (done) client.once("secureConnect", done);
+    const client = this.connect(orig, TlsSocket, opts, callback);
+    if (client.mitmResponseSocket == null) return client;
+    if (callback) client.once("secureConnect", callback);
 
     setTimeout(client.emit.bind(client, "secureConnect"));
 
@@ -124,9 +119,12 @@ export default class Mitm extends EventEmitter {
   }
 
   request(socket) {
-    if (!socket.mitmServerSocket) return socket;
+    if (!socket.mitmResponseSocket) return socket;
 
-    NODE_INTERNALS.createRequestAndResponse.call(this, socket.mitmServerSocket);
+    NODE_INTERNALS.createRequestAndResponse.call(
+      this,
+      socket.mitmResponseSocket
+    );
     return socket;
   }
 }
