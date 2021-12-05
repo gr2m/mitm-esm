@@ -496,15 +496,15 @@ test("net.createConnection must be equal to net.connect", () => {
 mustConnect("tls.connect", tls);
 
 test("tls.connect must return an instance of tls.TLSSocket", () => {
-  tls.connect({ host: "foo", port: 80 }).must.be.an.instanceof(tls.TLSSocket);
+  tls.connect({ host: "foo", port: 80 }).must.have.property("getCertificate");
 });
 
 test("tls.connect must return an instance of tls.TLSSocket given port", () => {
-  tls.connect(80).must.be.an.instanceof(tls.TLSSocket);
+  tls.connect(80).must.have.property("getCertificate");
 });
 
 test("tls.connect must return an instance of tls.TLSSocket given port and host", () => {
-  tls.connect(80, "10.0.0.1").must.be.an.instanceof(tls.TLSSocket);
+  tls.connect(80, "10.0.0.1").must.have.property("getCertificate");
 });
 
 test("tls.connect must emit secureConnect in next ticks", () => {
