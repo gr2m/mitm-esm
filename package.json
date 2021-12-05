@@ -40,7 +40,6 @@
     "test": "nyc uvu"
   },
   "devDependencies": {
-    "must": ">= 0.13 < 0.14",
     "nyc": "^15.1.0",
     "prettier": "^2.5.0",
     "sinon": ">= 1.9 < 2",
