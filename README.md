@@ -1,6 +1,6 @@
 # `mitm-esm`
 
-[[![Test](https://github.com/gr2m/mitm-esm/actions/workflows/test.yml/badge.svg)](https://github.com/gr2m/mitm-esm/actions/workflows/test.yml)](https://github.com/gr2m/mitm-esm/actions/workflows/test.yml)
+[![Test](https://github.com/gr2m/mitm-esm/actions/workflows/test.yml/badge.svg)](https://github.com/gr2m/mitm-esm/actions/workflows/test.yml)
 
 `mitm-esm` is the native ES Module version of [moll/node-mitm](https://github.com/moll/node-mitm).
 
