@@ -1,7 +1,6 @@
 # Mitm.js
 
-[![NPM version][npm-badge]](https://www.npmjs.com/package/mitm)
-[![Build Status](https://github.com/gr2m/node-mitm.js/workflows/Test/badge.svg)](https://github.com/gr2m/node-mitm.js/actions?query=workflow%3ATest+branch%3Amaster)
+[![Build Status](https://github.com/gr2m/node-mitm.js/workflows/Test/badge.svg)](https://github.com/gr2m/node-mitm.js/actions?query=workflow%3ATest+branch%3Aesm-and-other-musings)
 
 Mitm.js is a library for Node.js (and Io.js) to **intercept and mock** outgoing
 network **TCP** and **HTTP** connections. Mitm.js intercepts and gives you
@@ -22,9 +21,6 @@ I've developed Mitm.js on a need-to basis for testing [Monday
 Calendar][monday]'s syncing, so if you find a use-case I haven't come across,
 please fling me an [email][email], a [tweet][twitter] or [create an
 issue][issues] on GitHub.
-
-[npm-badge]: https://img.shields.io/npm/v/mitm.svg
-[travis-badge]: https://travis-ci.org/moll/node-mitm.svg?branch=master
 
 ### Tour
 
