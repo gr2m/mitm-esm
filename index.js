@@ -1,9 +1,9 @@
 // @ts-check
 
-import net from "net";
-import tls from "tls";
-import { ClientRequest, Agent } from "http";
-import { EventEmitter } from "events";
+import net from "node:net";
+import tls from "node:tls";
+import { ClientRequest, Agent } from "node:http";
+import { EventEmitter } from "node:events";
 
 import NODE_INTERNALS from "./lib/node_internals.js";
 

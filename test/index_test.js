@@ -1,9 +1,9 @@
-import net from "net";
-import tls from "tls";
-import http from "http";
-import https from "https";
-import stream from "stream";
-import { EventEmitter } from "events";
+import net from "node:net";
+import tls from "node:tls";
+import http from "node:http";
+import https from "node:https";
+import stream from "node:stream";
+import { EventEmitter } from "node:events";
 
 import sinon from "sinon";
 import { test } from "uvu";
