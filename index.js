@@ -113,22 +113,18 @@ export default class Mitm extends EventEmitter {
   connect(originalConnect, Socket, options, callback) {
     const [requestSocket, responseSocket] = createInternalSocketPair();
 
-    // Don't set request.connecting to false because there's nothing setting it
-    // back to false later. Originally that was done in Socket.prototype.connect
-    // and its afterConnect handler, but we're not calling that.
+    // request
     const request = new Socket({
       handle: requestSocket,
       ...options,
     });
 
+    // give opportunity to bypass the intercept
     this.emit("connect", request, options);
     if (request.bypassed) return originalConnect.call(this, options, callback);
 
-    const response = new Socket({
-      handle: responseSocket,
-      readable: true,
-      writable: true,
-    });
+    // response
+    const response = new Socket({ handle: responseSocket });
 
     // We use `.mitmResponseSocket` as a means to check if a request is intercepted
     // for net connects and to pass use it as a response when intercepting http(s) requests.
