@@ -5,11 +5,12 @@ import tls from "tls";
 import { ClientRequest, Agent } from "http";
 import { EventEmitter } from "events";
 
-import { NODE_INTERNALS } from "./lib/node_internals.js";
+import NODE_INTERNALS from "./lib/node_internals.js";
 
-import Socket from "./lib/socket.js";
-import TlsSocket from "./lib/tls_socket.js";
-import { createInternalSocketPair } from "./lib/internal_socket.js";
+import MitmNetSocket from "./lib/net_socket.js";
+import MitmTlsSocket from "./lib/tls_socket.js";
+import MitmServer from "./lib/server.js";
+import createRequestResponseHandlePair from "./lib/stream_handles.js";
 import Stubs from "./lib/stubs.js";
 
 export default class Mitm extends EventEmitter {
@@ -17,15 +18,7 @@ export default class Mitm extends EventEmitter {
     super();
 
     this.stubs = new Stubs();
-
-    // add cross-reference
-    this.on("request", (request, response) => {
-      request.res = response;
-      response.req = request;
-    });
-
-    this[NODE_INTERNALS.serverResponseKey] = NODE_INTERNALS.ServerResponse;
-    this[NODE_INTERNALS.incomingMessageKey] = NODE_INTERNALS.IncomingMessage;
+    this.server = new MitmServer(this);
 
     this.enable();
   }
@@ -64,14 +57,23 @@ export default class Mitm extends EventEmitter {
   }
 
   /**
+   * Create the fake `request` object and give the opportunity
+   * to bypass the interception.
+   *
    * @param {typeof net.connect} originalNetConnect
    * @param  {...any} args
-   * @returns {Socket}
+   * @returns {MitmNetSocket}
    */
   onNetConnect(originalNetConnect, ...args) {
     const [options, callback] = NODE_INTERNALS.normalizeConnectArgs(args);
 
-    const request = this.connect(originalNetConnect, Socket, options, callback);
+    const request = this.connect(
+      originalNetConnect,
+      MitmNetSocket,
+      options,
+      callback
+    );
+
     if (request.mitmResponseSocket == null) return request;
     if (callback) request.once("connect", callback);
 
@@ -79,19 +81,26 @@ export default class Mitm extends EventEmitter {
   }
 
   /**
+   * Create the fake `request` object and give the opportunity
+   * to bypass the interception.
+   *
+   * If the request is intercepted, we simulate a successful
+   * TLS handshake by emiting a "secureConnect" event asyncronously.
+   *
    * @param {typeof tls.connect} originalTlsConnect
    * @param  {...any} args
-   * @returns {TlsSocket}
+   * @returns {MitmTlsSocket}
    */
   onTlsConnect(originalTlsConnect, ...args) {
     const [options, callback] = NODE_INTERNALS.normalizeConnectArgs(args);
 
     const request = this.connect(
       originalTlsConnect,
-      TlsSocket,
+      MitmTlsSocket,
       options,
       callback
     );
+
     if (request.mitmResponseSocket == null) return request;
     if (callback) request.once("secureConnect", callback);
 
@@ -100,22 +109,39 @@ export default class Mitm extends EventEmitter {
     return request;
   }
 
-  clientRequestOnSocket(socket) {
-    if (!socket.mitmResponseSocket) return socket;
+  /**
+   * This is our hook into the `http.ClientRequest` constructor.
+   * Unless the interception is bypassed, we setup the socket handlers
+   * for the response using Node's internal connectionListener method.
+   *
+   * @see see https://github.com/nodejs/node/blob/b323cec78f713bc113be7f6030d787804a9af5a0/lib/_http_server.js#L440-L545
+   * @param {MitmNetSocket} request
+   * @returns
+   */
+  clientRequestOnSocket(request) {
+    if (!request.mitmResponseSocket) return request;
 
-    NODE_INTERNALS.createRequestAndResponse.call(
-      this,
-      socket.mitmResponseSocket
+    NODE_INTERNALS.httpConnectionListener.call(
+      this.server,
+      request.mitmResponseSocket
     );
-    return socket;
+
+    return request;
   }
 
+  /**
+   * This method is called when a socket is established, either through `net`,
+   * `tls`, or an `http.Agent` prototype. We create a fake `request` object
+   * and give the opportunity to bypass the interception in a `connect` hanler.
+   *
+   * If the request is intercepted, we call the original connect method
+   */
   connect(originalConnect, Socket, options, callback) {
-    const [requestSocket, responseSocket] = createInternalSocketPair();
+    const { requestHandle, responseHandle } = createRequestResponseHandlePair();
 
     // request
     const request = new Socket({
-      handle: requestSocket,
+      handle: requestHandle,
       ...options,
     });
 
@@ -124,7 +150,7 @@ export default class Mitm extends EventEmitter {
     if (request.bypassed) return originalConnect.call(this, options, callback);
 
     // response
-    const response = new Socket({ handle: responseSocket });
+    const response = new Socket({ handle: responseHandle });
 
     // We use `.mitmResponseSocket` as a means to check if a request is intercepted
     // for net connects and to pass use it as a response when intercepting http(s) requests.
