@@ -33,6 +33,7 @@
     "lint": "prettier --check \"{lib,test}/**/*.{js,json,ts}\" \"*.{js,json,md}\"",
     "lint:fix": "prettier --write \"{lib,test}/**/*.{js,json,ts}\" \"*.{js,json,md}\"",
     "test": "c8 --100 uvu",
+    "test:code": "uvu",
     "typecheck": "tsd && tsc --allowJs --noEmit --esModuleInterop *.js lib/*.js"
   },
   "devDependencies": {
