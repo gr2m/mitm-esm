@@ -42,6 +42,7 @@ export default class Mitm extends EventEmitter {
     const self = this;
     this.stubs.stub(ClientRequest.prototype, "onSocket", function (socket) {
       originalOnSocket.call(this, socket);
+
       self.clientRequestOnSocket(socket);
     });
 
@@ -115,18 +116,18 @@ export default class Mitm extends EventEmitter {
    * for the response using Node's internal connectionListener method.
    *
    * @see see https://github.com/nodejs/node/blob/b323cec78f713bc113be7f6030d787804a9af5a0/lib/_http_server.js#L440-L545
-   * @param {MitmNetSocket} request
+   * @param {MitmNetSocket} requestSocket
    * @returns
    */
-  clientRequestOnSocket(request) {
-    if (!request.mitmResponseSocket) return request;
+  clientRequestOnSocket(requestSocket) {
+    if (!requestSocket.mitmResponseSocket) return requestSocket;
 
     NODE_INTERNALS.httpConnectionListener.call(
       this.server,
-      request.mitmResponseSocket
+      requestSocket.mitmResponseSocket
     );
 
-    return request;
+    return requestSocket;
   }
 
   /**
