@@ -7,6 +7,15 @@
 import * as http from "http";
 import * as net from "net";
 
+export default class Mitm {
+  disable(): void;
+  enable(): void;
+  on(event: Event, callback: Callback): void;
+  on(event: "connect", callback: SocketConnectCallback): void;
+  on(event: "connection", callback: SocketConnectionCallback): void;
+  on(event: "request", callback: HttpCallback): void;
+}
+
 interface SocketOptions {
   port: number;
   host?: string | undefined;
@@ -38,11 +47,3 @@ type HttpCallback = (
 type Event = "connect" | "connection" | "request";
 
 type Callback = SocketConnectCallback | SocketConnectionCallback | HttpCallback;
-
-export default interface Mitm {
-  disable(): void;
-  on(event: Event, callback: Callback): void;
-  on(event: "connect", callback: SocketConnectCallback): void;
-  on(event: "connection", callback: SocketConnectionCallback): void;
-  on(event: "request", callback: HttpCallback): void;
-}
