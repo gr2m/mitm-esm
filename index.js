@@ -5,12 +5,12 @@ import tls from "node:tls";
 import { ClientRequest, Agent } from "node:http";
 import { EventEmitter } from "node:events";
 
-import NODE_INTERNALS from "./lib/node_internals.js";
+import NODE_INTERNALS from "./lib/node-internals.js";
 
-import MitmNetSocket from "./lib/net_socket.js";
-import MitmTlsSocket from "./lib/tls_socket.js";
+import MitmNetSocket from "./lib/net-socket.js";
+import MitmTlsSocket from "./lib/tls-socket.js";
 import MitmServer from "./lib/server.js";
-import createRequestResponseHandlePair from "./lib/stream_handles.js";
+import createRequestResponseHandlePair from "./lib/stream-handles.js";
 import Stubs from "./lib/stubs.js";
 
 export default class Mitm extends EventEmitter {
