@@ -141,32 +141,34 @@ export default class Mitm extends EventEmitter {
     const { requestHandle, responseHandle } = createRequestResponseHandlePair();
 
     // request
-    const request = new Socket({
+    const requestSocket = new Socket({
       handle: requestHandle,
       ...options,
     });
 
     // give opportunity to bypass the intercept
-    this.emit("connect", request, options);
-    if (request.bypassed) return originalConnect.call(this, options, callback);
+    this.emit("connect", requestSocket, options);
+    if (requestSocket.bypassed) {
+      return originalConnect.call(this, options, callback);
+    }
 
     // response
-    const response = new Socket({ handle: responseHandle });
+    const responseSocket = new Socket({ handle: responseHandle });
 
     // We use `.mitmResponseSocket` as a means to check if a request is intercepted
     // for net connects and to pass use it as a response when intercepting http(s) requests.
-    request.mitmResponseSocket = response;
+    requestSocket.mitmResponseSocket = responseSocket;
 
-    this.emit("connection", response, options);
+    this.emit("connection", responseSocket, options);
 
     // Ensure connect is emitted asynchronously, otherwise it would be impossible
     // to listen to it after calling net.connect or listening to it after the
     // ClientRequest emits "socket".
     setTimeout(() => {
-      request.emit("connect");
-      response.emit("connect");
+      requestSocket.emit("connect");
+      responseSocket.emit("connect");
     });
 
-    return request;
+    return requestSocket;
   }
 }
